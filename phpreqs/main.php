@@ -1,16 +1,22 @@
 <?php
 
 $hosts = [
-    //'https://httpbin.org',
+    'https://httpbin.org',
     'http://httpbin.org'
 ];
 
 foreach ($hosts as $host) {
-    echo req($host, "/headers", [
-        'Host: httpbin.org',
-        'Origin: null'
+    $resp = req($host, "/", [
+        "Host: httpbin.org",
+        "Origin: {$host}"
     ]);
+
+    if ($resp->hasHeader('Access-Control-Allow-Origin')){
+        echo "{$host}: ".$resp->getRawHeader('access-control-allow-origin').PHP_EOL;
+    }
+
 }
+
 
 function req($host, $path = "/", array $headers = []){
 
@@ -28,8 +34,8 @@ function req($host, $path = "/", array $headers = []){
         $transport = 'tls';
     }
 
-    $fp = stream_socket_client("{$transport}://{$host}:{$port}");
-    if (!$fp) return "";
+    $fp = @stream_socket_client("{$transport}://{$host}:{$port}");
+    if (!$fp) return new \Response("[error]");
 
     stream_set_write_buffer($fp, 0);
     stream_set_read_buffer($fp, 0);
@@ -45,8 +51,85 @@ function req($host, $path = "/", array $headers = []){
     }
     fwrite($fp, "\r\n");
 
-    $resp = stream_get_contents($fp);
+    $raw = stream_get_contents($fp);
     fclose($fp);
 
-    return $resp;
+    return new \Response($raw);
 }
+
+class Response {
+    public $rawStatus = '';
+    public $headers = [];
+    public $body = '';
+
+    public function __construct($raw){
+        $this->parseRaw($raw);
+    }
+
+    public function parseRaw($raw){
+
+        $lines = explode("\n", $raw);
+        $this->rawStatus = array_shift($lines);
+
+        while ($line = trim(array_shift($lines))){
+
+            if ($line == ''){
+                // Hit the body
+                break;
+            }
+
+            $this->headers[] = $line;
+        }
+
+        $this->body = implode("\n", $lines);
+    }
+
+    public function getRawHeader($search){
+        $search = $this->normaliseString($search);
+
+        foreach ($this->headers as $header){
+            $parts = explode(":", $header, 2);
+            if (sizeOf($parts) != 2){
+                continue;
+            }
+
+            $key = $this->normaliseString($parts[0]);
+
+            if ($search == $key){
+                return $header;
+            }
+        }
+        return "";
+    }
+
+    public function hasHeader($header){
+        return ($this->getRawHeader($header) != "");
+    }
+
+    public function getHeader($header){
+        $raw = $this->getRawHeader($header);
+        $parts = explode(":", $raw, 2);
+
+        if (sizeOf($parts) != 2){
+            return "";
+        }
+
+        return trim($parts[1]);
+    }
+
+    private function normaliseString($str){
+        return strToLower(trim($str));
+    }
+
+}
+
+
+
+
+
+
+
+
+
+
+
