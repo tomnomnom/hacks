@@ -4,7 +4,11 @@ require_once __DIR__.'/request.php';
 
 $req = new Request("http://httpbin.org");
 
-$resp = $req->setMethod('POST')
+$resp = $req
+    ->setTransport('tls')
+    ->setHost('httpbin.org')
+    ->setPort('443')
+    ->setMethod('POST')
     ->setPath('/anything')
     ->setQuery([
         'param1' => 'value1',

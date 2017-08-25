@@ -11,8 +11,11 @@ class Request extends RawRequest {
 
     public $headers = [];
 
-    public function __construct($url, array $headers = []){
+    public function __construct($url = "", array $headers = []){
+        if (!$url) return;
+
         $p = parse_url($url);
+        if (!$p) return;
 
         $this->scheme = $p['scheme'] ?? $this->scheme;
         if (strToLower($this->scheme) == 'https'){

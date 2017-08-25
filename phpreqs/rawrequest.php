@@ -30,6 +30,21 @@ class RawRequest {
         return $r;
     }
 
+    public function setTransport($transport){
+        $this->transport = $transport;
+        return $this;
+    }
+
+    public function setHost($host){
+        $this->host = $host;
+        return $this;
+    }
+
+    public function setPort($port){
+        $this->port = $port;
+        return $this;
+    }
+
     public function setEol($eol){
         $this->eol = $eol;
         return $this;
