@@ -29,8 +29,6 @@ class Request extends RawRequest {
         $this->query    = $p['query']    ?? $this->query;
         $this->fragment = $p['fragment'] ?? $this->fragment;
 
-        $this->addHeader("Host: {$this->host}");
-
         foreach ($headers as $header){
             $this->addHeader($header);
         }
