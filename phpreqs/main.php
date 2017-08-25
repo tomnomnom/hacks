@@ -51,9 +51,14 @@ echo PHP_EOL;
 echo $resp->toString();
 
 // There's one or two convenience methods on the response object to help you assert
-// stuff about the response. Open to suggestions for me (e.g. $resp->contains("/regex/"))
+// stuff about the response. Open to suggestions for more
 if ($resp->hasHeader('access-control-allow-origin')){
     echo "Found ACAO: ".$resp->getHeader('Access-Control-Allow-Origin').PHP_EOL;
+}
+
+var_dump($resp->getBody());
+if ($resp->bodyMatches("/{.*}/m")){
+    echo "It's probably JSON\n";
 }
 
 

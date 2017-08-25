@@ -112,6 +112,14 @@ class Response {
         return strToLower(trim($str));
     }
 
+    public function getBody(){
+        return $this->body;
+    }
+
+    public function bodyMatches($pattern){
+        return (preg_match($pattern, $this->body) === 1);
+    }
+
     public function toString(){
         $out = "{$this->rawStatus}\r\n";
 
