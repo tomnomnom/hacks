@@ -2,6 +2,8 @@ package main
 
 import (
 	"bufio"
+	"crypto/tls"
+	"crypto/x509"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -11,48 +13,39 @@ import (
 	"strings"
 )
 
-type Response struct {
-	rawStatus string
-	headers   []string
-	body      []byte
-}
-
-func (r *Response) AddHeader(header string) {
-	r.headers = append(r.headers, header)
-}
-
-func (r Response) Header(search string) string {
-	search = strings.ToLower(search)
-
-	for _, header := range r.headers {
-
-		p := strings.SplitN(header, ":", 2)
-		if len(p) != 2 {
-			continue
-		}
-
-		if strings.ToLower(p[0]) == search {
-			return strings.TrimSpace(p[1])
-		}
-	}
-	return ""
-}
-
 func main() {
 	req := RawRequest{
-		transport: "tcp",
+		transport: "tls",
 		host:      "httpbin.org",
-		port:      "80",
+		port:      "443",
 		request:   "GET /anything HTTP/1.1\r\n" + "Host: httpbin.org\r\n" + "Connection: close\r\n",
 	}
 
-	conn, err := net.Dial(
-		req.Transport(),
-		fmt.Sprintf("%s:%s", req.Host(), req.Port()),
-	)
+	var conn io.ReadWriter
+	var connerr error
 
-	if err != nil {
-		log.Fatal(err)
+	// This needs timeouts because it's fairly likely
+	// that something will go wrong :)
+	if req.IsTLS() {
+		roots, err := x509.SystemCertPool()
+		if err != nil {
+			log.Fatal(err)
+		}
+		conn, connerr = tls.Dial(
+			"tcp",
+			fmt.Sprintf("%s:%s", req.Host(), req.Port()),
+			&tls.Config{RootCAs: roots},
+		)
+
+	} else {
+		conn, connerr = net.Dial(
+			"tcp",
+			fmt.Sprintf("%s:%s", req.Host(), req.Port()),
+		)
+	}
+
+	if connerr != nil {
+		log.Fatal(connerr)
 	}
 
 	fmt.Fprintf(conn, req.String())

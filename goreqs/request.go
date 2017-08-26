@@ -1,7 +1,7 @@
 package main
 
 type Request interface {
-	Transport() string
+	IsTLS() bool
 	Host() string
 	Port() string
 	String() string
@@ -14,8 +14,8 @@ type RawRequest struct {
 	request   string
 }
 
-func (r RawRequest) Transport() string {
-	return r.transport
+func (r RawRequest) IsTLS() bool {
+	return r.transport == "tls"
 }
 
 func (r RawRequest) Host() string {
