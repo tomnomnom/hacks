@@ -1,6 +1,12 @@
 package main
 
-import "strings"
+import (
+	"bufio"
+	"io"
+	"io/ioutil"
+	"strconv"
+	"strings"
+)
 
 type Response struct {
 	rawStatus string
@@ -27,4 +33,54 @@ func (r Response) Header(search string) string {
 		}
 	}
 	return ""
+}
+
+func NewResponse(conn io.Reader) (*Response, error) {
+
+	r := bufio.NewReader(conn)
+	resp := &Response{}
+
+	s, err := r.ReadString('\n')
+	if err != nil {
+		return nil, err
+	}
+	resp.rawStatus = strings.TrimSpace(s)
+
+	for {
+		line, err := r.ReadString('\n')
+		line = strings.TrimSpace(line)
+
+		if err != nil || line == "" {
+			break
+		}
+
+		resp.AddHeader(line)
+	}
+
+	if cl := resp.Header("Content-Length"); cl != "" {
+		length, err := strconv.Atoi(cl)
+
+		if err != nil {
+			return nil, err
+		}
+
+		if length > 0 {
+			b := make([]byte, length)
+			_, err = io.ReadAtLeast(r, b, length)
+			if err != nil {
+				return nil, err
+			}
+			resp.body = b
+		}
+
+	} else {
+		b, err := ioutil.ReadAll(r)
+		if err != nil {
+			return nil, err
+		}
+
+		resp.body = b
+	}
+
+	return resp, nil
 }
