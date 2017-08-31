@@ -14,3 +14,8 @@ Disclosure: full
 
 Encryption: not a URL
 Acknowledgement: not a URL
+
+Contact: +44 7555 555 555
+Contact: +44-7555-555-555
+
+Contact: +44-INVALID-NUMBER

@@ -29,6 +29,10 @@ $validDisclosures = [
     'none'
 ];
 
+function validatePhone($candidate){
+    return (preg_match("/^\+[0-9\(\) -]+$/", $candidate) > 0);
+}
+
 $n = 0;
 foreach ($lines as $line){
     $n++;
@@ -54,7 +58,16 @@ foreach ($lines as $line){
 
     switch ($option){
         case FIELD_CONTACT:
-            // TODO: actual validation
+            $lower = strToLower($value);
+                if (!(
+                    filter_var($value, FILTER_VALIDATE_URL) ||
+                    filter_var($value, FILTER_VALIDATE_EMAIL) ||
+                    validatePhone($value)
+                )){
+                    $errors[] = "invalid value '{$value}' for option '{$parts[0]}' on line {$n}";
+                    continue 2;
+                }
+
             break;
 
         case FIELD_DISCLOSURE:
@@ -67,12 +80,12 @@ foreach ($lines as $line){
         case FIELD_ENCRYPTION:
         case FIELD_ACKNOWLEDGEMENT:
             if (!filter_var($value, FILTER_VALIDATE_URL)){
-                $errors[] = "invalid URI '{$value}' for option '{$parts[0]}' on line {$n}"; 
+                $errors[] = "invalid URI '{$value}' for option '{$parts[0]}' on line {$n}";
                 continue 2;
             }
             break;
 
-        
+
         default:
             $errors[] = "invalid option '{$parts[0]}' on line {$n}";
             continue 2;
