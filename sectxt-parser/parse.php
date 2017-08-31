@@ -42,7 +42,7 @@ foreach ($lines as $line){
     $value = $parts[1];
 
     if (!isset($fields[$option])){
-        die("invalid option: {$option}\n");
+        die("invalid option: {$parts[0]}\n");
     }
 
     $fields[$option][] = $value;
@@ -56,7 +56,6 @@ echo "comments:\n";
 foreach ($comments as $comment){
     echo "\t{$comment}\n";
 }
-echo PHP_EOL;
 
 foreach ($fields as $option => $field){
     echo "{$option}:\n";
@@ -64,5 +63,4 @@ foreach ($fields as $option => $field){
     foreach ($field as $value){
         echo "\t{$value}\n";
     }
-    echo PHP_EOL;
 }
