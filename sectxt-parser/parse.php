@@ -1,117 +1,154 @@
 #!/usr/bin/env php
 <?php
 
-const FIELD_CONTACT         = 'contact';
-const FIELD_ENCRYPTION      = 'encryption';
-const FIELD_DISCLOSURE      = 'disclosure';
-const FIELD_ACKNOWLEDGEMENT = 'acknowledgement';
+class SecurityTxt {
+    const FIELD_CONTACT         = 'contact';
+    const FIELD_ENCRYPTION      = 'encryption';
+    const FIELD_DISCLOSURE      = 'disclosure';
+    const FIELD_ACKNOWLEDGEMENT = 'acknowledgement';
+
+    private $validDisclosures = [
+        'full',
+        'partial',
+        'none'
+    ];
+
+    private $errors = [];
+    private $comments = [];
+
+    private $fields = [
+        self::FIELD_CONTACT         => [],
+        self::FIELD_ENCRYPTION      => [],
+        self::FIELD_DISCLOSURE      => [],
+        self::FIELD_ACKNOWLEDGEMENT => [],
+    ];
+
+    public function parse($raw){
+        $lines = explode("\n", $raw);
+
+        if (sizeOf($lines) < 1){
+            $this->addError("empty file");
+            return false;
+        }
+
+        $n = 0;
+        foreach ($lines as $line){
+            $n++;
+
+            // Empty line
+            $line = trim($line);
+            if (!$line) continue;
+
+            // Comment
+            if ($line[0] == "#"){
+                $this->comments[] = $line;
+                continue;
+            }
+
+            $parts = explode(":", $line, 2);
+            if (sizeOf($parts) != 2){
+                $this->addError("invalid input on line {$n}: {$line}");
+                continue;
+            }
+
+            $option = strToLower($parts[0]);
+            $value = trim($parts[1]);
+
+            switch ($option){
+                case self::FIELD_CONTACT:
+                    $lower = strToLower($value);
+                        if (!(
+                            filter_var($value, FILTER_VALIDATE_URL) ||
+                            filter_var($value, FILTER_VALIDATE_EMAIL) ||
+                            $this->validatePhone($value)
+                        )){
+                            $this->addError("invalid value '{$value}' for option '{$parts[0]}' on line {$n}");
+                            continue 2;
+                        }
+
+                    break;
+
+                case self::FIELD_DISCLOSURE:
+                    if (!in_array(strToLower($value), $this->validDisclosures)){
+                        $this->addError("invalid value '{$value}' for option '{$parts[0]}' on line {$n}; must be one of [".implode(", ", $this->validDisclosures)."]");
+                        continue 2;
+                    }
+                    break;
+
+                case self::FIELD_ENCRYPTION:
+                case self::FIELD_ACKNOWLEDGEMENT:
+                    if (!filter_var($value, FILTER_VALIDATE_URL)){
+                        $this->addError("invalid URI '{$value}' for option '{$parts[0]}' on line {$n}");
+                        continue 2;
+                    }
+                    break;
+
+
+                default:
+                    $this->addError("invalid option '{$parts[0]}' on line {$n}");
+                    continue 2;
+                    break;
+            }
+
+            $this->fields[$option][] = $value;
+        }
+
+        if (sizeOf($this->fields[self::FIELD_CONTACT]) < 1){
+            $this->addError("does not contain at least one contact field");
+        }
+
+    }
+
+    public function comments(){
+        return $this->comments;
+    }
+
+    public function fields(){
+        return $this->fields;
+    }
+
+    private function addError($msg){
+        $this->errors[] = $msg;
+    }
+
+    public function hasErrors(){
+        return (sizeOf($this->errors) > 0);
+    }
+
+    public function errors(){
+        return $this->errors;
+    }
+
+    private function validatePhone($candidate){
+        return (preg_match("/^\+[0-9\(\) -]+$/", $candidate) > 0);
+    }
+
+}
+
 
 $infile = $argv[1]?? die("usage {$argv[0]} <inputfile>\n");
 
 $raw = file_get_contents($infile);
 if (!$raw) die("failed to read {$infile}\n");
 
-$lines = explode("\n", $raw);
-if (sizeOf($lines) < 1) die("empty file\n");
-
-$errors = [];
-$comments = [];
-$fields = [
-    FIELD_CONTACT         => [],
-    FIELD_ENCRYPTION      => [],
-    FIELD_DISCLOSURE      => [],
-    FIELD_ACKNOWLEDGEMENT => [],
-];
-
-$validDisclosures = [
-    'full',
-    'partial',
-    'none'
-];
-
-function validatePhone($candidate){
-    return (preg_match("/^\+[0-9\(\) -]+$/", $candidate) > 0);
-}
-
-$n = 0;
-foreach ($lines as $line){
-    $n++;
-
-    // Empty line
-    $line = trim($line);
-    if (!$line) continue;
-
-    // Comment
-    if ($line[0] == "#"){
-        $comments[] = $line;
-        continue;
-    }
-
-    $parts = explode(":", $line, 2);
-    if (sizeOf($parts) != 2){
-        $errors[] = "invalid input on line {$n}: {$line}";
-        continue;
-    }
-
-    $option = strToLower($parts[0]);
-    $value = trim($parts[1]);
-
-    switch ($option){
-        case FIELD_CONTACT:
-            $lower = strToLower($value);
-                if (!(
-                    filter_var($value, FILTER_VALIDATE_URL) ||
-                    filter_var($value, FILTER_VALIDATE_EMAIL) ||
-                    validatePhone($value)
-                )){
-                    $errors[] = "invalid value '{$value}' for option '{$parts[0]}' on line {$n}";
-                    continue 2;
-                }
-
-            break;
-
-        case FIELD_DISCLOSURE:
-            if (!in_array(strToLower($value), $validDisclosures)){
-                $errors[] = "invalid value '{$value}' for option '{$parts[0]}' on line {$n}; must be one of [".implode(", ", $validDisclosures)."]";
-                continue 2;
-            }
-            break;
-
-        case FIELD_ENCRYPTION:
-        case FIELD_ACKNOWLEDGEMENT:
-            if (!filter_var($value, FILTER_VALIDATE_URL)){
-                $errors[] = "invalid URI '{$value}' for option '{$parts[0]}' on line {$n}";
-                continue 2;
-            }
-            break;
+$sectxt = new SecurityTxt();
+$sectxt->parse($raw);
 
 
-        default:
-            $errors[] = "invalid option '{$parts[0]}' on line {$n}";
-            continue 2;
-            break;
-    }
 
-    $fields[$option][] = $value;
-}
-
-if (sizeOf($fields[FIELD_CONTACT]) < 1){
-    $errors[] = "does not contain at least one contact field";
-}
-
-if (sizeOf($errors) > 0){
+if ($sectxt->hasErrors()){
     echo "errors:\n";
-    foreach ($errors as $error){
+    foreach ($sectxt->errors() as $error){
         echo "\t{$error}\n";
     }
 }
 
 echo "comments:\n";
-foreach ($comments as $comment){
+foreach ($sectxt->comments() as $comment){
     echo "\t{$comment}\n";
 }
 
-foreach ($fields as $option => $field){
+foreach ($sectxt->fields() as $option => $field){
     if (sizeOf($field) < 1) continue;
 
     echo "{$option}:\n";
