@@ -20,7 +20,7 @@ func main() {
 	subdomainsFile := flag.Arg(1)
 
 	if domainsFile == "" {
-		domainsFile = "domains"
+		domainsFile = "apexes"
 	}
 
 	if subdomainsFile == "" {
@@ -41,9 +41,8 @@ func main() {
 	ss := bufio.NewScanner(s)
 
 	type domain struct {
-		name      string
-		wildcards []string
-		subs      chan string
+		name string
+		subs chan string
 	}
 
 	// make a slice of all the domains and spin up a worker for each one
@@ -53,22 +52,28 @@ func main() {
 	for ds.Scan() {
 		name := ds.Text()
 
-		wildcards, _ := net.LookupHost(fmt.Sprintf("%s.%s", wildcardCheck, name))
+		_, err := net.LookupHost(fmt.Sprintf("%s.%s", wildcardCheck, name))
+		if err == nil {
+			// There's a wildcard, don't bother
+			continue
+		}
 
-		subs := make(chan string)
-		d := domain{name, wildcards, subs}
+		subs := make(chan string, 128)
+		d := domain{name, subs}
 		domains = append(domains, d)
 
-		wg.Add(1)
-		go func() {
+		worker := func() {
 			for sub := range d.subs {
 				candidate := fmt.Sprintf("%s.%s", sub, d.name)
-				if subdomainExists(candidate, d.wildcards) {
+				if subdomainExists(candidate) {
 					fmt.Println(candidate)
 				}
 			}
 			wg.Done()
-		}()
+		}
+		wg.Add(2)
+		go worker()
+		go worker()
 	}
 
 	// check for errors reading the list of domains
@@ -97,18 +102,10 @@ func main() {
 	wg.Wait()
 }
 
-func subdomainExists(subdomain string, wildcards []string) bool {
-	addrs, err := net.LookupHost(subdomain)
+func subdomainExists(subdomain string) bool {
+	_, err := net.LookupHost(subdomain)
 	if err != nil {
 		return false
-	}
-
-	for _, addr := range addrs {
-		for _, wildcard := range wildcards {
-			if addr == wildcard {
-				return false
-			}
-		}
 	}
 
 	return true
