@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -13,10 +14,27 @@ const fetchURL = "http://web.archive.org/cdx/search/cdx?url=*.%s/*&output=json&f
 
 func main() {
 
-	sc := bufio.NewScanner(os.Stdin)
+	var domains []string
 
-	for sc.Scan() {
-		domain := sc.Text()
+	flag.Parse()
+
+	if flag.NArg() > 0 {
+		// fetch for a single domain
+		domains = []string{flag.Arg(0)}
+	} else {
+
+		// fetch for all domains from stdin
+		sc := bufio.NewScanner(os.Stdin)
+		for sc.Scan() {
+			domains = append(domains, sc.Text())
+		}
+
+		if err := sc.Err(); err != nil {
+			fmt.Fprintf(os.Stderr, "failed to read input: %s\n", err)
+		}
+	}
+
+	for _, domain := range domains {
 
 		urls, err := getWaybackURLs(domain)
 		if err != nil {
@@ -27,10 +45,6 @@ func main() {
 		for _, url := range urls {
 			fmt.Println(url)
 		}
-	}
-
-	if err := sc.Err(); err != nil {
-		fmt.Fprintf(os.Stderr, "failed to read input: %s\n", err)
 	}
 
 }
