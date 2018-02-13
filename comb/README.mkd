@@ -1,0 +1,62 @@
+# comb
+
+Combine the lines from two files in every combination.
+
+## Usage
+
+```
+▶ comb -h
+Combine the lines from two files in every combination
+
+Usage:
+  comb [OPTIONS] <prefixfile> <suffixfile>
+
+Options:
+  -f, --flip       Flip mode (order by suffix)
+  -s, --separator  String to place between prefix and suffix
+```
+
+## Example
+
+Normal mode:
+
+```
+▶ cat prefixes
+1
+2
+▶ cat suffixes
+A
+B
+C
+▶ comb prefixes suffixes
+1A
+1B
+1C
+2A
+2B
+2C
+```
+
+Flip mode (order by suffix):
+
+```
+▶ comb --flip prefixes suffixes
+1A
+2A
+1B
+2B
+1C
+2C
+```
+
+Separator:
+
+```
+▶ comb --separator="-" prefixes suffixes
+1-A
+1-B
+1-C
+2-A
+2-B
+2-C
+```
