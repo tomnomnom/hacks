@@ -35,7 +35,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	// use 'a' and 'b' because if which is the prefix
+	// use 'a' and 'b' because which is the prefix
 	// and which is the suffix depends on if we're in
 	// flip mode or not.
 	fileA := prefixFile
