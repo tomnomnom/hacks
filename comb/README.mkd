@@ -60,3 +60,7 @@ Separator:
 2-B
 2-C
 ```
+
+## Can't you just do this with a couple of nested bash loops?
+
+Yes, but it's a PITA to type.
