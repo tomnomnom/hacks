@@ -68,7 +68,7 @@ func init() {
 		fmt.Fprintf(os.Stderr, "Usage:\n")
 		fmt.Fprintf(os.Stderr, "  comb [OPTIONS] <prefixfile> <suffixfile>\n\n")
 		fmt.Fprintf(os.Stderr, "Options:\n")
-		fmt.Fprintf(os.Stderr, "  -f, --flip       Flip mode (order by suffix)\n")
-		fmt.Fprintf(os.Stderr, "  -s, --separator  String to place between prefix and suffix\n")
+		fmt.Fprintf(os.Stderr, "  -f, --flip             Flip mode (order by suffix)\n")
+		fmt.Fprintf(os.Stderr, "  -s, --separator <str>  String to place between prefix and suffix\n")
 	}
 }

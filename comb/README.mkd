@@ -12,8 +12,8 @@ Usage:
   comb [OPTIONS] <prefixfile> <suffixfile>
 
 Options:
-  -f, --flip       Flip mode (order by suffix)
-  -s, --separator  String to place between prefix and suffix
+  -f, --flip             Flip mode (order by suffix)
+  -s, --separator <str>  String to place between prefix and suffix
 ```
 
 ## Example
