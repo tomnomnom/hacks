@@ -13,19 +13,14 @@ func main() {
 
 	mode := flag.Arg(0)
 
-	var procFn urlProc
-	switch mode {
+	procFn, ok := map[string]urlProc{
+		"querykeys":   queryKeys,
+		"queryvalues": queryValues,
+		"paths":       paths,
+		"domains":     domains,
+	}[mode]
 
-	case "querykeys":
-		procFn = queryKeys
-
-	case "paths":
-		procFn = paths
-
-	case "domains":
-		procFn = domains
-
-	default:
+	if !ok {
 		fmt.Fprintf(os.Stderr, "unknown mode: %s\n", mode)
 		return
 	}
@@ -37,7 +32,8 @@ func main() {
 	for sc.Scan() {
 		u, err := url.Parse(sc.Text())
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "parse failure: %s\n", err)
+			// TODO: add this back in with a verbose flag
+			// fmt.Fprintf(os.Stderr, "parse failure: %s\n", err)
 			continue
 		}
 
@@ -46,6 +42,13 @@ func main() {
 		// loop over it instead of having two kinds of
 		// urlProc functions.
 		for _, val := range procFn(u) {
+
+			// you do see empty values sometimes
+			if val == "" {
+				continue
+			}
+
+			// TODO: add a mode that outputs duplicates
 			if seen[val] {
 				continue
 			}
@@ -66,6 +69,16 @@ func queryKeys(u *url.URL) []string {
 	out := make([]string, 0)
 	for key, _ := range u.Query() {
 		out = append(out, key)
+	}
+	return out
+}
+
+func queryValues(u *url.URL) []string {
+	out := make([]string, 0)
+	for _, vals := range u.Query() {
+		for _, val := range vals {
+			out = append(out, val)
+		}
 	}
 	return out
 }
