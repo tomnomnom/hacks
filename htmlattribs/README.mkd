@@ -1,0 +1,10 @@
+# htmlattribs
+
+Extract HTML attribute values:
+
+```
+▶ curl -s example.com | htmlattribs type name href
+viewport
+text/css
+http://www.iana.org/domains/example
+```
