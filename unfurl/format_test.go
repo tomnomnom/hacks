@@ -23,6 +23,9 @@ func TestFormat(t *testing.T) {
 
 		{"https://example.com/foo#bar", "%f", "bar"},
 		{"https://example.com#bar", "%f", "bar"},
+
+		{"https://example.com#bar", "foo%%bar", "foo%bar"},
+		{"https://example.com#bar", "%s://%%", "https://%"},
 	}
 
 	for _, c := range cases {
