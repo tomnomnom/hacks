@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"flag"
 	"fmt"
 	"net/url"
@@ -12,12 +13,12 @@ func main() {
 	flag.Parse()
 
 	mode := flag.Arg(0)
+	fmtStr := flag.Arg(1)
 
 	procFn, ok := map[string]urlProc{
-		"querykeys":   queryKeys,
-		"queryvalues": queryValues,
-		"paths":       paths,
-		"domains":     domains,
+		"keys":   queryKeys,
+		"values": queryValues,
+		"format": format,
 	}[mode]
 
 	if !ok {
@@ -41,7 +42,7 @@ func main() {
 		// so it's just easier to always get a slice and
 		// loop over it instead of having two kinds of
 		// urlProc functions.
-		for _, val := range procFn(u) {
+		for _, val := range procFn(u, fmtStr) {
 
 			// you do see empty values sometimes
 			if val == "" {
@@ -63,9 +64,9 @@ func main() {
 	}
 }
 
-type urlProc func(*url.URL) []string
+type urlProc func(*url.URL, string) []string
 
-func queryKeys(u *url.URL) []string {
+func queryKeys(u *url.URL, _ string) []string {
 	out := make([]string, 0)
 	for key, _ := range u.Query() {
 		out = append(out, key)
@@ -73,7 +74,7 @@ func queryKeys(u *url.URL) []string {
 	return out
 }
 
-func queryValues(u *url.URL) []string {
+func queryValues(u *url.URL, _ string) []string {
 	out := make([]string, 0)
 	for _, vals := range u.Query() {
 		for _, val := range vals {
@@ -83,10 +84,45 @@ func queryValues(u *url.URL) []string {
 	return out
 }
 
-func paths(u *url.URL) []string {
-	return []string{u.EscapedPath()}
-}
+func format(u *url.URL, f string) []string {
+	out := &bytes.Buffer{}
 
-func domains(u *url.URL) []string {
-	return []string{u.Hostname()}
+	inFormat := false
+	for _, r := range f {
+
+		if r == '%' {
+			inFormat = true
+			continue
+		}
+
+		if !inFormat {
+			out.WriteRune(r)
+			continue
+		}
+
+		switch r {
+		case '%':
+			out.WriteRune('%')
+		case 's':
+			out.WriteString(u.Scheme)
+		case 'd':
+			out.WriteString(u.Hostname())
+		case 'P':
+			out.WriteString(u.Port())
+		case 'p':
+			out.WriteString(u.EscapedPath())
+		case 'q':
+			out.WriteString(u.RawQuery)
+		case 'f':
+			out.WriteString(u.Fragment)
+		default:
+			// output untouched
+			out.WriteRune('%')
+			out.WriteRune(r)
+		}
+
+		inFormat = false
+	}
+
+	return []string{out.String()}
 }

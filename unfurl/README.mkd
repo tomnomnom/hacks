@@ -5,7 +5,7 @@ Pull out bits of URLs provided on `stdin`
 ## Usage
 
 ```
-▶ cat urls | unfurl querykeys | head -n5
+▶ cat urls | unfurl keys | head -n5
 utm_content
 next
 redirect
@@ -14,7 +14,7 @@ q
 ```
 
 ```
-▶ cat urls | unfurl queryvalues | head -n5
+▶ cat urls | unfurl values | head -n5
 14324
 7463
 about
@@ -23,7 +23,7 @@ true
 ```
 
 ```
-▶ cat urls | unfurl paths | head -n5
+▶ cat urls | unfurl format %p | head -n5
 /robots.txt
 /favicon.ico
 /session
@@ -32,7 +32,7 @@ true
 ```
 
 ```
-▶ cat urls | unfurl domains | head -n5
+▶ cat urls | unfurl format %d | head -n5
 example.com
 subdomain.example.com
 example.net
