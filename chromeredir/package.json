@@ -1,0 +1,14 @@
+{
+  "name": "chromeredir",
+  "version": "1.0.0",
+  "description": "",
+  "main": "checkredir.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Tom Hudson",
+  "license": "MIT",
+  "dependencies": {
+    "puppeteer": "^1.1.1"
+  }
+}
