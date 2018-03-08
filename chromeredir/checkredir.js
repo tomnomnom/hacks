@@ -1,6 +1,6 @@
 const puppeteer = require('puppeteer');
 
-if (process.argv[2] == "") {
+if (!process.argv[2]) {
     console.log("usage: node checkredir.js <URL>")
     process.exit(1);
 }
