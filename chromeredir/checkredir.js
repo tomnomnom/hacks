@@ -8,7 +8,7 @@ if (process.argv[2] == "") {
 url = process.argv[2];
 
 (async () => {
-  const browser = await puppeteer.launch();
+  const browser = await puppeteer.launch({ignoreHTTPSErrors: true});
   const page = await browser.newPage();
   await page.goto(url);
 
