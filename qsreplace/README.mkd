@@ -1,0 +1,27 @@
+# qsreplace
+
+Accept URLs on stdin, replace all query string values with a user-supplied value.
+
+## Usage
+
+```
+▶ cat urls.txt 
+https://example.com/path?one=1&two=2
+https://example.com/path?two=2&one=1
+https://example.com/pathtwo?two=2&one=1
+https://example.net/a/path?two=2&one=1
+
+▶ cat urls.txt | qsreplace newval
+https://example.com/path?one=newval&two=newval
+https://example.com/pathtwo?one=newval&two=newval
+https://example.net/a/path?one=newval&two=newval
+```
+
+## Install
+
+With Go:
+
+```
+▶ go get -u github.com/tomnomnom/hacks/qsreplace
+```
+
