@@ -1,0 +1,79 @@
+# concurl
+
+Concurrently request URLs provided on `stdin` using the `curl` command line utility (with per-domain rate limiting).
+
+## Install
+
+With Go:
+
+```
+▶ go get -u github.com/tomnomnom/hacks/concurl
+```
+
+## Usage
+
+Basic usage:
+
+```
+▶ cat urls.txt
+https://example.com/path?one=1&two=2
+https://example.com/pathtwo?two=2&one=1
+https://example.net/a/path?two=2&one=1
+
+▶ cat urls.txt | concurl -c 3
+out/example.com/6ad33f150c6a17b4d51bb3a5425036160e18643c https://example.com/path?one=1&two=2
+out/example.net/33ce069e645b0cb190ef0205af9200ae53b57e53 https://example.net/a/path?two=2&one=1
+out/example.com/5657622dd56a6c64da72459132d576a8f89576e2 https://example.com/pathtwo?two=2&one=1
+
+▶ head -n 7 out/example.net/33ce069e645b0cb190ef0205af9200ae53b57e53
+cmd: curl --silent https://example.net/a/path?two=2&one=1
+------
+
+<!doctype html>
+<html>
+<head>
+    <title>Example Domain</title>
+```
+
+### Curl Options
+
+Supply options to the `curl` command after a `--`:
+
+```
+▶ echo "https://httpbin.org/anything" | concurl -c 5 -- -H'User-Agent: concurl' -H'X-Foo: bar'
+out/httpbin.org/391256f9956ce947c3bcb9af616fe0725a35ff4e https://httpbin.org/anything
+
+▶ cat out/httpbin.org/391256f9956ce947c3bcb9af616fe0725a35ff4e
+cmd: curl --silent https://httpbin.org/anything -HUser-Agent: concurl -HX-Foo: bar
+------
+
+{
+  "args": {}, 
+  "data": "", 
+  "files": {}, 
+  "form": {}, 
+  "headers": {
+    "Accept": "*/*", 
+    "Connection": "close", 
+    "Host": "httpbin.org", 
+    "User-Agent": "concurl", 
+    "X-Foo": "bar"
+  }, 
+  "json": null, 
+  "method": "GET", 
+  "url": "https://httpbin.org/anything"
+}
+```
+
+## Help
+
+```
+▶ concurl -h
+Usage of concurl:
+  -c int
+    	Concurrency level (default 20)
+  -d int
+    	Delay between requests to the same domain (default 5000)
+  -o string
+    	Output directory (default "out")
+```
