@@ -11,6 +11,8 @@ import (
 )
 
 func main() {
+	var appendMode bool
+	flag.BoolVar(&appendMode, "a", false, "Append the value instead of replacing it")
 	flag.Parse()
 
 	seen := make(map[string]bool)
@@ -43,8 +45,12 @@ func main() {
 		seen[key] = true
 
 		qs := url.Values{}
-		for param, _ := range u.Query() {
-			qs.Set(param, flag.Arg(0))
+		for param, vv := range u.Query() {
+			if appendMode {
+				qs.Set(param, vv[0]+flag.Arg(0))
+			} else {
+				qs.Set(param, flag.Arg(0))
+			}
 		}
 
 		u.RawQuery = qs.Encode()
