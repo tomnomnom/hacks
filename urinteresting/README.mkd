@@ -1,0 +1,12 @@
+# urinteresting
+
+Accept URLs on stdin, output the ones that look 'interesting'
+
+## Install
+
+With Go:
+
+```
+▶ go get -u github.com/tomnomnom/hacks/urinteresting
+```
+
