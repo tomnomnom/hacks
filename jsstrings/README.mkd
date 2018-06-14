@@ -1,0 +1,20 @@
+# JSStrings
+
+Pulls all of the string literals out of a JavaScript file.
+
+## Install
+
+```
+▶ go get -u github.com/tomnomnom/hacks/jsstrings
+```
+
+## Usage
+
+```
+▶ jsstrings testdata/example.js | sort -u | tail -n 5
+X-Request-URL
+You must pass an array to all.
+You must pass an array to race.
+You must pass a resolver function as the first argument to the promise constructor
+ 
+```
