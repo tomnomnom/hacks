@@ -30,15 +30,47 @@ func main() {
 
 		// extensions
 		func(u *url.URL) bool {
-			return strings.HasSuffix(u.EscapedPath(), ".php") ||
-				strings.HasSuffix(u.EscapedPath(), ".asp") ||
-				strings.HasSuffix(u.EscapedPath(), ".aspx")
+			exts := []string{
+				".php",
+				".phtml",
+				".asp",
+				".aspx",
+				".cgi",
+				".pl",
+				".json",
+				".xml",
+				".rb",
+				".py",
+				".sh",
+				".yaml",
+				".yml",
+				".toml",
+				".ini",
+				".md",
+				".mkd",
+				".do",
+				".jsp",
+			}
+
+			p := strings.ToLower(u.EscapedPath())
+			for _, e := range exts {
+				if strings.HasSuffix(p, e) {
+					return true
+				}
+			}
+
+			return false
 		},
 
 		// path bits
 		func(u *url.URL) bool {
-			return strings.Contains(u.EscapedPath(), "ajax") ||
-				strings.Contains(u.EscapedPath(), "jsonp")
+			p := strings.ToLower(u.EscapedPath())
+			return strings.Contains(p, "ajax") ||
+				strings.Contains(p, "jsonp") ||
+				strings.Contains(p, "admin") ||
+				strings.Contains(p, "include") ||
+				strings.Contains(p, "src") ||
+				strings.Contains(p, "redirect")
 		},
 
 		// non-standard port
@@ -57,7 +89,8 @@ func main() {
 			//fmt.Fprintf(os.Stderr, "failed to parse url %s [%s]\n", sc.Text(), err)
 			continue
 		}
-		if isStaticFile(u) {
+
+		if isBoringStaticFile(u) {
 			continue
 		}
 
@@ -94,36 +127,68 @@ func main() {
 
 }
 
+// qsCheck looks a key=value pair from a query
+// string and returns true if it looks interesting
 func qsCheck(k, v string) bool {
+	k = strings.ToLower(k)
+	v = strings.ToLower(v)
+
 	// the super-common utm_referrer etc
 	// are rarely interesting
 	if strings.HasPrefix(k, "utm_") {
 		return false
 	}
 
+	// value checks
 	return strings.HasPrefix(v, "http") ||
+		strings.Contains(v, "{") ||
+		strings.Contains(v, "[") ||
 		strings.Contains(v, "/") ||
+		strings.Contains(v, "\\") ||
+		strings.Contains(v, "<") ||
+		strings.Contains(v, "(") ||
+		// shoutout to liveoverflow ;)
+		strings.Contains(v, "eyj") ||
+
+		// key checks
 		strings.Contains(k, "redirect") ||
 		strings.Contains(k, "debug") ||
+		strings.Contains(k, "password") ||
+		strings.Contains(k, "passwd") ||
+		strings.Contains(k, "file") ||
+		strings.Contains(k, "fn") ||
+		strings.Contains(k, "template") ||
+		strings.Contains(k, "include") ||
+		strings.Contains(k, "require") ||
+		strings.Contains(k, "url") ||
+		strings.Contains(k, "uri") ||
+		strings.Contains(k, "src") ||
+		strings.Contains(k, "href") ||
+		strings.Contains(k, "func") ||
 		strings.Contains(k, "callback")
 }
 
-func isStaticFile(u *url.URL) bool {
+func isBoringStaticFile(u *url.URL) bool {
 	exts := []string{
+		// OK, so JS could be interesting, but 99% of the time it's boring.
+		".js",
+
 		".html",
 		".htm",
 		".svg",
 		".eot",
 		".ttf",
-		".js",
+		".woff",
+		".woff2",
 		".png",
 		".jpg",
 		".jpeg",
 		".gif",
 	}
 
+	p := strings.ToLower(u.EscapedPath())
 	for _, e := range exts {
-		if strings.HasSuffix(u.EscapedPath(), e) {
+		if strings.HasSuffix(p, e) {
 			return true
 		}
 	}
