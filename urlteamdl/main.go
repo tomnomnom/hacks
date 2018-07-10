@@ -2,11 +2,13 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
 	"fmt"
 	"net/http"
+	"time"
 )
 
-const searchURL = "https://archive.org/advancedsearch.php?q=collection%3A%28UrlteamWebCrawls%29&fl%5B%5D=identifier&sort%5B%5D=addeddate+desc&sort%5B%5D=&sort%5B%5D=&rows=5&page=1&output=json"
+const searchURL = "https://archive.org/advancedsearch.php"
 const metaURL = "http://archive.org/metadata/%s"
 
 type file struct {
@@ -15,7 +17,31 @@ type file struct {
 }
 
 func main() {
-	res, err := http.Get(searchURL)
+	flag.Parse()
+
+	since := flag.Arg(0)
+	if since == "" {
+		fmt.Println("usage: urlteamdl <sinceISODate>")
+		return
+	}
+
+	req, err := http.NewRequest("GET", searchURL, nil)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	today := time.Now().Format("2006-01-02")
+
+	q := req.URL.Query()
+	q.Add("q", fmt.Sprintf("collection:(UrlteamWebCrawls) AND addeddate:[%s TO %s]", since, today))
+	q.Add("fl[]", "identifier")
+	q.Add("sort[]", "addeddate desc")
+	q.Add("rows", "500")
+	q.Add("output", "json")
+	req.URL.RawQuery = q.Encode()
+
+	res, err := http.DefaultClient.Do(req)
 	if err != nil {
 		fmt.Println(err)
 		return
