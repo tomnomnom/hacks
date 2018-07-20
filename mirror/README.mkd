@@ -15,3 +15,5 @@ mirror <url>
 * Only check for values over a certain length to help avoid false positives
 * Check for URLencoded versions of values
 * Check for reflection in HTTP headers
+* Option for checking path reflection
+* A way to send and check for reflection in POST data
