@@ -11,6 +11,12 @@ go get -u github.com/tomnomnom/hacks/mirror
 mirror <url>
 ```
 
+Or
+
+```
+cat urls | mirror
+```
+
 ## TODO
 * Only check for values over a certain length to help avoid false positives
 * Check for URLencoded versions of values
