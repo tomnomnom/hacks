@@ -17,7 +17,7 @@ func main() {
 	flag.Parse()
 
 	var input io.Reader
-	input = strings.NewReader(flag.Arg(0))
+	input = strings.NewReader(strings.Join(flag.Args(), "\n"))
 	if flag.Arg(0) == "" {
 		input = os.Stdin
 	}
@@ -58,7 +58,7 @@ func main() {
 				matches := re.FindAllStringSubmatch(body, -1)
 
 				for _, m := range matches {
-					fmt.Printf("query string key '%s' with value '%s' reflected in response body (...%s...)\n", k, v, m[0])
+					fmt.Printf("%s: query string key '%s' with value '%s' reflected in response body (...%s...)\n", u, k, v, m[0])
 				}
 			}
 
