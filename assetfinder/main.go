@@ -21,16 +21,11 @@ func main() {
 		return
 	}
 
-	// TODO:
-	//   https://crt.sh/?q=%25.%s&output=json
-	//   crt.sh's return format isn't actually valid JSON;
-	//   it's a series of JSON objects with no delimiter
-	//   between them. I mean seriously, why would you
-	//   do that?!
 	sources := []fetchFn{
 		fetchCertSpotter,
 		fetchHackerTarget,
 		fetchThreatCrowd,
+		fetchCrtSh,
 	}
 
 	// track what we've already printed to avoid duplicates
@@ -124,6 +119,38 @@ func fetchCertSpotter(domain string) ([]string, error) {
 	}
 
 	return out, nil
+}
+
+func fetchCrtSh(domain string) ([]string, error) {
+	resp, err := http.Get(
+		fmt.Sprintf("https://crt.sh/?q=%%25.%s&output=json", domain),
+	)
+	if err != nil {
+		return []string{}, err
+	}
+	defer resp.Body.Close()
+
+	output := make([]string, 0)
+
+	dec := json.NewDecoder(resp.Body)
+
+	for {
+		wrapper := struct {
+			Name string `json:"name_value"`
+		}{}
+
+		err := dec.Decode(&wrapper)
+		if err != nil {
+			fmt.Println(err)
+			break
+		}
+
+		// sometimes the results contain things that aren't domains... because yeah.
+		if strings.Contains(wrapper.Name, ".") {
+			output = append(output, wrapper.Name)
+		}
+	}
+	return output, nil
 }
 
 func httpGet(url string) ([]byte, error) {
