@@ -7,9 +7,10 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
+	"os"
 	"strings"
+	"sync"
 )
 
 func main() {
@@ -26,25 +27,49 @@ func main() {
 		fetchHackerTarget,
 		fetchThreatCrowd,
 		fetchCrtSh,
+		fetchFacebook,
 	}
+
+	out := make(chan string)
+	var wg sync.WaitGroup
+
+	// call each of the source workers in a goroutine
+	for _, source := range sources {
+		wg.Add(1)
+		fn := source
+
+		go func() {
+			defer wg.Done()
+
+			names, err := fn(domain)
+
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "err: %s\n", err)
+				return
+			}
+
+			for _, n := range names {
+				out <- n
+			}
+		}()
+	}
+
+	// close the output channel when all the workers are done
+	go func() {
+		wg.Wait()
+		close(out)
+	}()
 
 	// track what we've already printed to avoid duplicates
 	printed := make(map[string]bool)
 
-	for _, source := range sources {
-		names, err := source(domain)
-		if err != nil {
-			log.Fatal(err)
+	for n := range out {
+		n = cleanDomain(n)
+		if _, ok := printed[n]; ok {
+			continue
 		}
-
-		for _, n := range names {
-			n = cleanDomain(n)
-			if _, ok := printed[n]; ok {
-				continue
-			}
-			fmt.Println(n)
-			printed[n] = true
-		}
+		fmt.Println(n)
+		printed[n] = true
 	}
 }
 
@@ -141,14 +166,10 @@ func fetchCrtSh(domain string) ([]string, error) {
 
 		err := dec.Decode(&wrapper)
 		if err != nil {
-			fmt.Println(err)
 			break
 		}
 
-		// sometimes the results contain things that aren't domains... because yeah.
-		if strings.Contains(wrapper.Name, ".") {
-			output = append(output, wrapper.Name)
-		}
+		output = append(output, wrapper.Name)
 	}
 	return output, nil
 }
@@ -170,6 +191,8 @@ func httpGet(url string) ([]byte, error) {
 }
 
 func cleanDomain(d string) string {
+	d = strings.ToLower(d)
+
 	// no idea what this is, but we can't clean it ¯\_(ツ)_/¯
 	if len(d) < 2 {
 		return d
