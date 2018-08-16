@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -108,4 +109,15 @@ func cleanDomain(d string) string {
 
 	return d
 
+}
+
+func fetchJSON(url string, wrapper interface{}) error {
+	resp, err := http.Get(url)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	dec := json.NewDecoder(resp.Body)
+
+	return dec.Decode(wrapper)
 }

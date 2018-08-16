@@ -1,24 +1,18 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 )
 
 func fetchCertSpotter(domain string) ([]string, error) {
 	out := make([]string, 0)
 
-	raw, err := httpGet(
-		fmt.Sprintf("https://certspotter.com/api/v0/certs?domain=%s", domain),
-	)
-	if err != nil {
-		return out, err
-	}
+	fetchURL := fmt.Sprintf("https://certspotter.com/api/v0/certs?domain=%s", domain)
 
 	wrapper := []struct {
 		DNSNames []string `json:"dns_names"`
 	}{}
-	err = json.Unmarshal(raw, &wrapper)
+	err := fetchJSON(fetchURL, &wrapper)
 	if err != nil {
 		return out, err
 	}

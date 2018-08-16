@@ -40,13 +40,6 @@ func getFacebookCerts(accessToken, query string) ([]string, error) {
 
 	for {
 
-		resp, err := http.Get(fetchURL)
-		if err != nil {
-			return out, err
-		}
-
-		dec := json.NewDecoder(resp.Body)
-
 		wrapper := struct {
 			Data []struct {
 				Domains []string `json:"domains"`
@@ -57,11 +50,10 @@ func getFacebookCerts(accessToken, query string) ([]string, error) {
 			} `json:"paging"`
 		}{}
 
-		err = dec.Decode(&wrapper)
+		err := fetchJSON(fetchURL, &wrapper)
 		if err != nil {
 			return out, err
 		}
-		resp.Body.Close()
 
 		for _, data := range wrapper.Data {
 			for _, d := range data.Domains {

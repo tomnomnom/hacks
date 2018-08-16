@@ -19,6 +19,9 @@ func fetchCrtSh(domain string) ([]string, error) {
 
 	dec := json.NewDecoder(resp.Body)
 
+	// The crt.sh API is a little funky... It returns multiple
+	// JSON objects with no delimiter, so you just have to keep
+	// attempting a decode until you hit EOF
 	for {
 		wrapper := struct {
 			Name string `json:"name_value"`

@@ -1,24 +1,18 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 )
 
 func fetchThreatCrowd(domain string) ([]string, error) {
 	out := make([]string, 0)
 
-	raw, err := httpGet(
-		fmt.Sprintf("https://www.threatcrowd.org/searchApi/v2/domain/report/?domain=%s", domain),
-	)
-	if err != nil {
-		return out, err
-	}
+	fetchURL := fmt.Sprintf("https://www.threatcrowd.org/searchApi/v2/domain/report/?domain=%s", domain)
 
 	wrapper := struct {
 		Subdomains []string `json:"subdomains"`
 	}{}
-	err = json.Unmarshal(raw, &wrapper)
+	err := fetchJSON(fetchURL, &wrapper)
 	if err != nil {
 		return out, err
 	}

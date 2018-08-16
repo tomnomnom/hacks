@@ -1,31 +1,19 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
-	"net/http"
 	"net/url"
 )
 
 func fetchWayback(domain string) ([]string, error) {
 
-	res, err := http.Get(
-		fmt.Sprintf("http://web.archive.org/cdx/search/cdx?url=*.%s/*&output=json&collapse=urlkey", domain),
-	)
-	if err != nil {
-		return []string{}, err
-	}
-
-	raw, err := ioutil.ReadAll(res.Body)
-
-	res.Body.Close()
-	if err != nil {
-		return []string{}, err
-	}
+	fetchURL := fmt.Sprintf("http://web.archive.org/cdx/search/cdx?url=*.%s/*&output=json&collapse=urlkey", domain)
 
 	var wrapper [][]string
-	err = json.Unmarshal(raw, &wrapper)
+	err := fetchJSON(fetchURL, &wrapper)
+	if err != nil {
+		return []string{}, err
+	}
 
 	out := make([]string, 0)
 
