@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"crypto/tls"
 	"flag"
 	"fmt"
 	"net/http"
@@ -19,12 +20,26 @@ func main() {
 
 	jobs := make(chan string)
 
+	var transport = &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+
+	var httpClient = &http.Client{
+		Transport: transport,
+	}
+
 	var wg sync.WaitGroup
 	for i := 0; i < concurrency; i++ {
 		wg.Add(1)
 		go func() {
 			for j := range jobs {
-				resp, err := http.Get(j)
+				req, err := http.NewRequest("GET", j, nil)
+				if err != nil {
+					continue
+				}
+				req.Close = true
+
+				resp, err := httpClient.Do(req)
 				if err != nil {
 					continue
 				}
