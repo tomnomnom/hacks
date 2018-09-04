@@ -2,15 +2,40 @@ package main
 
 import (
 	"bufio"
-	"crypto/tls"
 	"flag"
 	"fmt"
 	"net/http"
 	"os"
-	"sync"
+	"strings"
 
+	"github.com/tomnomnom/gahttp"
 	"golang.org/x/net/html"
 )
+
+func extractTitle(req *http.Request, resp *http.Response, err error) {
+	if err != nil {
+		return
+	}
+
+	z := html.NewTokenizer(resp.Body)
+
+	for {
+		tt := z.Next()
+		if tt == html.ErrorToken {
+			break
+		}
+
+		t := z.Token()
+
+		if t.Type == html.StartTagToken && t.Data == "title" {
+			if z.Next() == html.TextToken {
+				title := strings.TrimSpace(z.Token().Data)
+				fmt.Printf("%s (%s)\n", title, req.URL)
+			}
+		}
+
+	}
+}
 
 func main() {
 
@@ -18,63 +43,16 @@ func main() {
 	flag.IntVar(&concurrency, "c", 20, "Concurrency")
 	flag.Parse()
 
-	jobs := make(chan string)
-
-	var transport = &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-	}
-
-	var httpClient = &http.Client{
-		Transport: transport,
-	}
-
-	var wg sync.WaitGroup
-	for i := 0; i < concurrency; i++ {
-		wg.Add(1)
-		go func() {
-			for j := range jobs {
-				req, err := http.NewRequest("GET", j, nil)
-				if err != nil {
-					continue
-				}
-				req.Close = true
-
-				resp, err := httpClient.Do(req)
-				if err != nil {
-					continue
-				}
-
-				z := html.NewTokenizer(resp.Body)
-
-				for {
-					tt := z.Next()
-					if tt == html.ErrorToken {
-						break
-					}
-
-					t := z.Token()
-
-					if t.Type == html.StartTagToken && t.Data == "title" {
-						if z.Next() == html.TextToken {
-							fmt.Printf("%s (%s)\n", z.Token().Data, j)
-						}
-					}
-
-				}
-
-				resp.Body.Close()
-
-			}
-			wg.Done()
-		}()
-	}
+	p := gahttp.NewPipelineWithClient(gahttp.NewClient(gahttp.SkipVerify))
+	p.SetConcurrency(concurrency)
+	extractFn := gahttp.Wrap(extractTitle, gahttp.CloseBody)
 
 	sc := bufio.NewScanner(os.Stdin)
 	for sc.Scan() {
-		jobs <- sc.Text()
+		p.Get(sc.Text(), extractFn)
 	}
-	close(jobs)
+	p.Done()
 
-	wg.Wait()
+	p.Wait()
 
 }
