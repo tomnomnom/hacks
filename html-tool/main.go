@@ -108,13 +108,26 @@ type target struct {
 func main() {
 	// TODO: support quiet mode (no errors)
 	// TODO: option to output file or url as context
+	// TODO: add concurrency flag
 
 	flag.Parse()
 
 	// TODO: check mode is valid
 	mode := flag.Arg(0)
 	if mode == "" {
-		fmt.Println("usage... TODO ;)")
+		fmt.Println("Accept URLs or filenames for HTML documents on stdin and extract parts of them.")
+		fmt.Println("")
+		fmt.Println("Usage: html-tool <mode> [<args>]")
+		fmt.Println("")
+		fmt.Println("Modes:")
+		fmt.Println("	tags <tag-names>        Extract text contained in tags")
+		fmt.Println("	attribs <attrib-names>  Extract attribute values")
+		fmt.Println("	comments                Extract comments")
+		fmt.Println("")
+		fmt.Println("Examples:")
+		fmt.Println("	cat urls.txt | html-tool tags title a strong")
+		fmt.Println("	find . -type f -name \"*.html\" | html-tool attribs src href")
+		fmt.Println("	cat urls.txt | html-tool comments")
 		return
 	}
 
