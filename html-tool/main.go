@@ -10,9 +10,36 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/ericchiang/css"
 	"github.com/tomnomnom/gahttp"
 	"golang.org/x/net/html"
 )
+
+func extractSelector(r io.Reader, selector string) ([]string, error) {
+
+	out := []string{}
+
+	sel, err := css.Compile(selector)
+	if err != nil {
+		return out, err
+	}
+
+	node, err := html.Parse(r)
+	if err != nil {
+		return out, err
+	}
+
+	// it's kind of tricky to actually know what to output
+	// if the resulting tags contain more than just a text node
+	for _, ele := range sel.Select(node) {
+		if ele.FirstChild == nil {
+			continue
+		}
+		out = append(out, ele.FirstChild.Data)
+	}
+
+	return out, nil
+}
 
 func extractComments(r io.Reader) []string {
 
@@ -148,6 +175,17 @@ func main() {
 				vals = extractAttribs(t.r, args)
 			case "comments":
 				vals = extractComments(t.r)
+			case "query":
+				var err error
+				vals, err = extractSelector(t.r, flag.Arg(1))
+				if err != nil {
+					fmt.Fprintf(os.Stderr, "failed to parse CSS selector: %s\n", err)
+					break
+				}
+
+			default:
+				fmt.Fprintf(os.Stderr, "unsupported mode '%s'\n", mode)
+				break
 			}
 
 			for _, v := range vals {
