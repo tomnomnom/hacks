@@ -9,6 +9,13 @@ import (
 	"strings"
 )
 
+// Ideas:
+//   More than, say, 3 query string parameteres (exluding utm_*?)
+//   Popular app names (phpmyadmin etc) in path
+//	 Filenames from configfiles list / seclist
+//   dev/stage/test in path or hostname
+//   jenkins, graphite etc in hostname or path
+
 type urlCheck func(*url.URL) bool
 
 func main() {

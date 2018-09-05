@@ -9,7 +9,12 @@ if (fn == ""){
 }
 
 fs.readFile(fn, "utf8", function(err, data) {
-    for (let token of acorn.tokenizer(data)) {
+    // TODO: Trim the strings
+    for (let token of acorn.tokenizer(data,{
+        onComment: function(block, text, start, end){
+            console.log(text);
+        }
+    })) {
         if (token.type == acorn.tokTypes.string){
             console.log(token.value);
         }

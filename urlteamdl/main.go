@@ -19,9 +19,15 @@ type file struct {
 func main() {
 	flag.Parse()
 
-	since := flag.Arg(0)
-	if since == "" {
+	sinceStr := flag.Arg(0)
+	if sinceStr == "" {
 		fmt.Println("usage: urlteamdl <sinceISODate>")
+		return
+	}
+
+	sinceTime, err := time.Parse("2006-01-02", sinceStr)
+	if err != nil {
+		fmt.Println("invalid date! try e.g. 2017-10-26")
 		return
 	}
 
@@ -31,6 +37,7 @@ func main() {
 		return
 	}
 
+	since := sinceTime.Format("2006-01-02")
 	today := time.Now().Format("2006-01-02")
 
 	q := req.URL.Query()
@@ -65,7 +72,7 @@ func main() {
 	}
 
 	for _, d := range wrapper.Response.Docs {
-		files, err := getFiles(d.Identifier)
+		files, err := getDownloadURLs(d.Identifier)
 		if err != nil {
 			fmt.Println(err)
 			continue
@@ -80,7 +87,7 @@ func main() {
 	}
 }
 
-func getFiles(ident string) ([]file, error) {
+func getDownloadURLs(ident string) ([]file, error) {
 
 	res, err := http.Get(fmt.Sprintf(metaURL, ident))
 	if err != nil {
@@ -96,5 +103,4 @@ func getFiles(ident string) ([]file, error) {
 	err = dec.Decode(wrapper)
 
 	return wrapper.Files, err
-
 }
