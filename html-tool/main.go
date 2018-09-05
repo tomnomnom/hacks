@@ -231,9 +231,8 @@ func main() {
 		targets <- &target{location, f}
 	}
 	p.Done()
-	close(targets)
-
 	p.Wait()
-	wg.Wait()
 
+	close(targets)
+	wg.Wait()
 }
