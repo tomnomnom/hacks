@@ -12,6 +12,8 @@ import (
 )
 
 func main() {
+	var subsOnly bool
+	flag.BoolVar(&subsOnly, "subs-only", false, "Only incluse subdomains of search domain")
 	flag.Parse()
 
 	domain := flag.Arg(0)
@@ -19,6 +21,7 @@ func main() {
 		fmt.Println("no domain specified")
 		return
 	}
+	domain = strings.ToLower(domain)
 
 	sources := []fetchFn{
 		fetchCertSpotter,
@@ -66,6 +69,9 @@ func main() {
 	for n := range out {
 		n = cleanDomain(n)
 		if _, ok := printed[n]; ok {
+			continue
+		}
+		if subsOnly && !strings.HasSuffix(n, domain) {
 			continue
 		}
 		fmt.Println(n)
