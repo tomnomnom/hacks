@@ -31,6 +31,7 @@ func extractTitle(req *http.Request, resp *http.Response, err error) {
 			if z.Next() == html.TextToken {
 				title := strings.TrimSpace(z.Token().Data)
 				fmt.Printf("%s (%s)\n", title, req.URL)
+				break
 			}
 		}
 
