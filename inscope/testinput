@@ -1,0 +1,6 @@
+https://example.com/footle
+https://inscope.example.com/some/path?foo=bar
+https://outofscope.example.net/bar
+example.com
+example.net
+http://sub.example.com
