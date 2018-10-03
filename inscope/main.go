@@ -59,7 +59,6 @@ func newScopeChecker(r io.Reader) (*scopeChecker, error) {
 
 		isAnti := false
 		if p[0] == '!' {
-			fmt.Println("we have a negative")
 			isAnti = true
 			p = p[1:]
 		}
