@@ -7,10 +7,10 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"regexp"
+	"strings"
 )
 
-type formater func(io.Reader) interface{}
+type formater func(io.Reader, []string) interface{}
 
 func main() {
 	var format string
@@ -29,14 +29,14 @@ func main() {
 		return
 	}
 
-	out := f(os.Stdin)
+	out := f(os.Stdin, flag.Args())
 
 	enc := json.NewEncoder(os.Stdout)
 	enc.SetIndent("", "    ")
 	enc.Encode(out)
 }
 
-func toArray(r io.Reader) interface{} {
+func toArray(r io.Reader, args []string) interface{} {
 	sc := bufio.NewScanner(r)
 	lines := make([]string, 0)
 	for sc.Scan() {
@@ -45,29 +45,31 @@ func toArray(r io.Reader) interface{} {
 	return lines
 }
 
-func to2dArray(r io.Reader) interface{} {
+func to2dArray(r io.Reader, args []string) interface{} {
 	sc := bufio.NewScanner(r)
 	lines := make([][]string, 0)
-	re := regexp.MustCompile("\\s+")
 	for sc.Scan() {
-		parts := re.Split(sc.Text(), -1)
+		parts := strings.Fields(sc.Text())
 		lines = append(lines, parts)
 	}
 	return lines
 }
 
-func toMap(r io.Reader) interface{} {
+func toMap(r io.Reader, args []string) interface{} {
 	sc := bufio.NewScanner(r)
-	lines := make(map[string]string)
-	re := regexp.MustCompile("\\s+")
+	lines := make([]map[string]string, 0)
 	for sc.Scan() {
-		parts := re.Split(sc.Text(), 2)
-		key := parts[0]
-		val := ""
-		if len(parts) == 2 {
-			val = parts[1]
+		line := make(map[string]string)
+		fields := strings.Fields(sc.Text())
+
+		for i, k := range args {
+			if len(fields) <= i {
+				break
+			}
+			line[k] = fields[i]
 		}
-		lines[key] = val
+
+		lines = append(lines, line)
 	}
 	return lines
 }
