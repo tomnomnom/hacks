@@ -22,6 +22,7 @@ var aliveHosts = make(map[string]struct{})
 var aliveMutex = &sync.Mutex{}
 var statusCodes = flag.String("s", "200", "Status Codes to accept separated by a comma")
 var inputFile = flag.String("w", "", "File containing URLS")
+var conc = flag.Int("c", 12, "Concurrency: default 12")
 var codes []string
 
 func main() {
@@ -46,7 +47,7 @@ func main() {
 	sc := bufio.NewScanner(input)
 
 	urls := make(chan string, 128)
-	concurrency := 12
+	concurrency := *conc
 	var wg sync.WaitGroup
 	wg.Add(concurrency)
 
