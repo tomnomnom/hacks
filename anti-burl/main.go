@@ -14,6 +14,11 @@ import (
 	"time"
 )
 
+var deadHosts = make(map[string]struct{})
+var deadMutex = &sync.Mutex{}
+var aliveHosts = make(map[string]struct{})
+var aliveMutex = &sync.Mutex{}
+
 func main() {
 	flag.Parse()
 
@@ -75,7 +80,28 @@ func main() {
 }
 
 func resolves(u *url.URL) bool {
+	aliveMutex.Lock()
+	if _, ok := aliveHosts[u.Hostname()]; ok {
+		return true
+	}
+	aliveMutex.Unlock()
+
+	deadMutex.Lock()
+	if _, ok := deadHosts[u.Hostname()]; ok {
+		return false
+	}
+	deadMutex.Unlock()
+
 	addrs, _ := net.LookupHost(u.Hostname())
+	if len(addrs) == 0 {
+		deadMutex.Lock()
+		deadHosts[u.Hostname()] = struct{}{}
+		deadMutex.Unlock()
+	} else {
+		aliveMutex.Lock()
+		aliveHosts[u.Hostname()] = struct{}{}
+		aliveMutex.Unlock()
+	}
 	return len(addrs) != 0
 }
 
