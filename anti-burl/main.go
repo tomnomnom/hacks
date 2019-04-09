@@ -36,8 +36,6 @@ func main() {
 	var wg sync.WaitGroup
 	wg.Add(concurrency)
 
-	dead := &sync.Map{}
-
 	for i := 0; i < concurrency; i++ {
 		go func() {
 			for raw := range urls {
@@ -47,12 +45,7 @@ func main() {
 					continue
 				}
 
-				if _, isDead := dead.Load(u.Hostname()); isDead {
-					continue
-				}
-
 				if !resolves(u) {
-					dead.Store(u.Hostname(), struct{}{})
 					continue
 				}
 
