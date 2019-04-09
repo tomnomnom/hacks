@@ -10,6 +10,8 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strconv"
+	"strings"
 	"sync"
 	"time"
 )
@@ -18,15 +20,22 @@ var deadHosts = make(map[string]struct{})
 var deadMutex = &sync.Mutex{}
 var aliveHosts = make(map[string]struct{})
 var aliveMutex = &sync.Mutex{}
+var statusCodes = flag.String("s", "200", "Status Codes to accept separated by a comma")
+var inputFile = flag.String("w", "", "File containing URLS")
+var codes []string
 
 func main() {
 	flag.Parse()
-
+	if strings.Compare(*statusCodes, "200") != 0 {
+		codes = strings.Split(*statusCodes, ",")
+	} else {
+		codes = append(codes, "200")
+	}
 	var input io.Reader
 	input = os.Stdin
 
-	if flag.NArg() > 0 {
-		file, err := os.Open(flag.Arg(0))
+	if strings.Compare(*inputFile, "") != 0 {
+		file, err := os.Open(*inputFile)
 		if err != nil {
 			fmt.Printf("failed to open file: %s\n", err)
 			os.Exit(1)
@@ -59,7 +68,7 @@ func main() {
 					continue
 				}
 
-				if resp.StatusCode == http.StatusOK {
+				if contains(codes, resp.StatusCode) {
 					fmt.Printf("%s\n", u)
 				}
 			}
@@ -78,7 +87,15 @@ func main() {
 
 	wg.Wait()
 }
-
+func contains(status []string, code int) bool {
+	for _, stat := range status {
+		stat, _ := strconv.Atoi(stat)
+		if stat == code {
+			return true
+		}
+	}
+	return false
+}
 func resolves(u *url.URL) bool {
 	aliveMutex.Lock()
 	if _, ok := aliveHosts[u.Hostname()]; ok {
