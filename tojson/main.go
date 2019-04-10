@@ -66,6 +66,10 @@ func toMap(r io.Reader, args []string) interface{} {
 			if len(fields) <= i {
 				break
 			}
+			// ignore fields that have a dash as a key
+			if k == "-" {
+				continue
+			}
 			line[k] = fields[i]
 		}
 

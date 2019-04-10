@@ -77,7 +77,8 @@ func main() {
 				strings.Contains(p, "admin") ||
 				strings.Contains(p, "include") ||
 				strings.Contains(p, "src") ||
-				strings.Contains(p, "redirect")
+				strings.Contains(p, "redirect") ||
+				strings.Contains(p, "proxy")
 		},
 
 		// non-standard port

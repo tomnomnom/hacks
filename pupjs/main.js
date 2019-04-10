@@ -1,6 +1,6 @@
 const puppeteer = require('puppeteer');
 
-puppeteer.launch().then(async browser => {
+puppeteer.launch({ignoreHTTPSErrors: true}).then(async browser => {
     const page = await browser.newPage();
     await page.setRequestInterception(true);
     await page.setUserAgent('Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.3497.81 Safari/537.36');
@@ -24,4 +24,6 @@ puppeteer.launch().then(async browser => {
     let url = process.argv[2];
     await page.goto(url);
     await browser.close();
+}).catch(err => {
+    process.exit();
 });
