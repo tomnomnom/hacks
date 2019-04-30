@@ -1,0 +1,8 @@
+Apache command:
+    /usr/sbin/httpd -D FOREGROUND
+
+MySQL command:
+    su mysql -s /bin/sh -c '/usr/bin/mysqld --datadir=/var/lib/mysql'
+
+Supervisor command:
+	/usr/bin/supervisord -n -c /etc/supervisord.conf
