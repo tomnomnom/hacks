@@ -6,3 +6,12 @@ MySQL command:
 
 Supervisor command:
 	/usr/bin/supervisord -n -c /etc/supervisord.conf
+
+Get container PID:
+    docker inspect --format {{.State.Pid}}
+    FS is in /proc/$PID/root
+
+TODO:
+    Handle change of page URL somehow ¯\_(ツ)_/¯
+
+

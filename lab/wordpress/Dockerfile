@@ -23,6 +23,7 @@ RUN su mysql -s /bin/sh -c 'mysql_install_db --datadir=/var/lib/mysql'
 RUN mkdir /app
 RUN curl -s https://en-gb.wordpress.org/latest-en_GB.tar.gz -o /app/wordpress.tgz
 RUN tar xvzf /app/wordpress.tgz -C /app/ 
+RUN chmod -R 777 /app/wordpress/wp-content
 
 # Wordpress config
 ADD wp-config.php /app/wordpress/
