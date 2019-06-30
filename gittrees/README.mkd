@@ -1,6 +1,6 @@
 # gittrees
 
-List all object hashes and their filenames in a git repo.
+List all blob object hashes and their filenames in a git repo.
 
 ## Install
 
