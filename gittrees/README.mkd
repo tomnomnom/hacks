@@ -1,0 +1,36 @@
+# gittrees
+
+List all object hashes and their filenames in a git repo.
+
+## Install
+
+```
+go get -u github.com/tomnomnom/hacks/gittrees
+```
+
+## Usage
+
+```
+> gittrees ~/path/to/repo
+79e0815a8c82d0f1f8f467b01d97143a8fed7048 .gitignore
+b7214221c4b62b4712f783c2b7c3b8fc4f076fbc .travis.yml
+2fa1a8731c67462f4eef8ae6b92623a2cc726a5d ADVANCED.mkd
+870261d35c7e56ae4d1fb70551a0aa80c672116e CHANGELOG.mkd
+ec81b112e749edd9e921f0aad437495cb25427f8 CONTRIBUTING.mkd
+55192df5648b00be23225d407467373710701533 LICENSE
+6c36ac1718f767df67d1e497c0d310091c2228ed README.mkd
+e5a27f321140e1b7c532ced80b7bcd8099ec300b docs/images/bareword.png
+431e850a97057167863082082af9951ab233130b docs/images/input.png
+c94339d0f1e05b5a80972eccc968c60f048a19ec docs/images/key.png
+...
+```
+
+You might want to grep the contents of these objects. As an example, here's how
+you could grep the contents of all objects that were js files for 'console.log':
+
+```
+> gittrees .. | grep '\.js' | cut -d' ' -f1 | git cat-file --batch | grep -a 'console.log'
+```
+
+
+
