@@ -1,0 +1,17 @@
+Apache command:
+    /usr/sbin/httpd -D FOREGROUND
+
+MySQL command:
+    su mysql -s /bin/sh -c '/usr/bin/mysqld --datadir=/var/lib/mysql'
+
+Supervisor command:
+	/usr/bin/supervisord -n -c /etc/supervisord.conf
+
+Get container PID:
+    docker inspect --format {{.State.Pid}}
+    FS is in /proc/$PID/root
+
+TODO:
+    Handle change of page URL somehow ¯\_(ツ)_/¯
+
+
