@@ -6,7 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"net"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
@@ -14,10 +14,13 @@ import (
 	"time"
 )
 
-var deadHosts = make(map[string]struct{})
-var deadMutex = &sync.Mutex{}
-var aliveHosts = make(map[string]struct{})
-var aliveMutex = &sync.Mutex{}
+var (
+	client    *http.Client
+	transport *http.Transport
+	wg        sync.WaitGroup
+
+	concurrency = 20
+)
 
 func main() {
 	flag.Parse()
@@ -36,99 +39,67 @@ func main() {
 
 	sc := bufio.NewScanner(input)
 
-	urls := make(chan string, 128)
-	concurrency := 12
-	var wg sync.WaitGroup
-	wg.Add(concurrency)
-
-	for i := 0; i < concurrency; i++ {
-		go func() {
-			for raw := range urls {
-
-				u, err := url.ParseRequestURI(raw)
-				if err != nil {
-					continue
-				}
-
-				if !resolves(u) {
-					continue
-				}
-
-				resp, err := fetchURL(u)
-				if err != nil {
-					continue
-				}
-
-				if resp.StatusCode == http.StatusOK {
-					fmt.Printf("%s\n", u)
-				}
-			}
-			wg.Done()
-		}()
+	client = &http.Client{
+		Transport: &http.Transport{
+			MaxIdleConns:        concurrency,
+			MaxIdleConnsPerHost: concurrency,
+			MaxConnsPerHost:     concurrency,
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: true,
+			},
+		},
+		CheckRedirect: func(_ *http.Request, _ []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
+		Timeout: 5 * time.Second,
 	}
+
+	semaphore := make(chan bool, concurrency)
 
 	for sc.Scan() {
-		urls <- sc.Text()
+		raw := sc.Text()
+		wg.Add(1)
+		semaphore <- true
+
+		go func(raw string) {
+			defer wg.Done()
+			u, err := url.ParseRequestURI(raw)
+			if err != nil {
+				return
+			}
+			resp, err := fetchURL(u)
+			if err != nil {
+				return
+			}
+			if resp.StatusCode == http.StatusOK {
+				fmt.Println(u)
+			}
+			<-semaphore
+		}(raw)
 	}
-	close(urls)
+
+	wg.Wait()
 
 	if sc.Err() != nil {
 		fmt.Printf("error: %s\n", sc.Err())
 	}
-
-	wg.Wait()
-}
-
-func resolves(u *url.URL) bool {
-	aliveMutex.Lock()
-	if _, ok := aliveHosts[u.Hostname()]; ok {
-		return true
-	}
-	aliveMutex.Unlock()
-
-	deadMutex.Lock()
-	if _, ok := deadHosts[u.Hostname()]; ok {
-		return false
-	}
-	deadMutex.Unlock()
-
-	addrs, _ := net.LookupHost(u.Hostname())
-	if len(addrs) == 0 {
-		deadMutex.Lock()
-		deadHosts[u.Hostname()] = struct{}{}
-		deadMutex.Unlock()
-	} else {
-		aliveMutex.Lock()
-		aliveHosts[u.Hostname()] = struct{}{}
-		aliveMutex.Unlock()
-	}
-	return len(addrs) != 0
 }
 
 func fetchURL(u *url.URL) (*http.Response, error) {
-	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-	}
-	client := http.Client{
-		Transport: tr,
-		Timeout:   5 * time.Second,
-	}
-
 	req, err := http.NewRequest("GET", u.String(), nil)
 	if err != nil {
 		return nil, err
 	}
-	req.Close = true
+
 	req.Header.Set("User-Agent", "burl/0.1")
 
 	resp, err := client.Do(req)
-	if resp != nil {
-		resp.Body.Close()
-	}
-
 	if err != nil {
 		return nil, err
 	}
+
+	defer resp.Body.Close()
+	io.Copy(ioutil.Discard, resp.Body)
 
 	return resp, err
 }
