@@ -32,50 +32,47 @@ func main() {
 
 	flag.Parse()
 
-	user := flag.Arg(0)
-	if user == "" {
-		fmt.Fprintf(os.Stderr, "usage: ghrepos <username>\n")
+	search := flag.Arg(0)
+	if search == "" {
+		fmt.Fprintf(os.Stderr, "usage: ghsearch <search>\n")
 		return
 	}
 
 	client, err := getClient()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "error getting client: %s\n")
+		fmt.Fprintf(os.Stderr, "error getting client: %s\n", err)
 		return
 	}
 
-	repos, err := getRepos(client, user)
+	results, err := getResults(client, search)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "error getting repos: %s\n")
-		// There might still be repos we can print here...
+		fmt.Fprintf(os.Stderr, "error getting results: %s\n", err)
+		// There might still be members we can print here...
 	}
 
-	for _, repo := range repos {
-		if *repo.Fork {
-			continue
-		}
+	for _, result := range results {
 
-		fmt.Println(*repo.CloneURL)
+		fmt.Printf("https://github.com/%s.git\n", *result.GetRepository().FullName)
 	}
 
 }
 
-func getRepos(client *github.Client, user string) ([]*github.Repository, error) {
-	var allRepos []*github.Repository
+func getResults(client *github.Client, search string) ([]github.CodeResult, error) {
+	var allResults []github.CodeResult
 
-	opt := &github.RepositoryListOptions{
+	opt := &github.SearchOptions{
 		ListOptions: github.ListOptions{PerPage: 20},
 	}
 
 	for {
 
 		ctx := context.Background()
-		repos, resp, err := client.Repositories.List(ctx, user, opt)
+		results, resp, err := client.Search.Code(ctx, search, opt)
 		if err != nil {
-			return allRepos, fmt.Errorf("failed to list repos: %s", err)
+			return allResults, err
 		}
 
-		allRepos = append(allRepos, repos...)
+		allResults = append(allResults, results.CodeResults...)
 
 		if resp.NextPage == 0 {
 			break
@@ -83,6 +80,6 @@ func getRepos(client *github.Client, user string) ([]*github.Repository, error) 
 		opt.Page = resp.NextPage
 	}
 
-	return allRepos, nil
+	return allResults, nil
 
 }
