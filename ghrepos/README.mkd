@@ -1,5 +1,0 @@
-# ghrepos
-
-Needs:
-	* Repos from search results
-	* Users from orgs + their repos?
