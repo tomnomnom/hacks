@@ -2,15 +2,19 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
 	"fmt"
 	"net/http"
 	"os"
 )
 
 type payload struct {
-	Token string `json:"token"`
-	Data  string `json:"data"`
+	Token string   `json:"token"`
+	Lines []string `json:"lines"`
 }
+
+// lol globals
+var bus chan []string
 
 func payloadHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
@@ -28,19 +32,42 @@ func payloadHandler(w http.ResponseWriter, r *http.Request) {
 	p := &payload{}
 	err := d.Decode(p)
 	if err != nil {
+		fmt.Fprintf(os.Stderr, "failed to decode JSON: %s", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	if p.Token != token {
+		fmt.Fprintf(os.Stderr, "got invalid token")
 		http.Error(w, "lol no", http.StatusUnauthorized)
 		return
 	}
 
-	fmt.Println(p.Data)
+	bus <- p.Lines
 }
 
 func main() {
+	var unique bool
+	flag.BoolVar(&unique, "u", false, "only print unique lines")
+
+	flag.Parse()
+
+	bus = make(chan []string)
+
+	go func() {
+		seen := make(map[string]bool)
+
+		for ss := range bus {
+			for _, s := range ss {
+				if unique && seen[s] {
+					continue
+				}
+				seen[s] = true
+				fmt.Println(s)
+			}
+		}
+	}()
+
 	http.HandleFunc("/", payloadHandler)
 	http.ListenAndServe(":8443", nil)
 }
