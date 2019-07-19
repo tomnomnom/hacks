@@ -1,0 +1,15 @@
+{
+    "name": "webpaste",
+    "version": "1.0",
+    "description": "don't use this lol",
+    "permissions": ["storage", "declarativeContent", "activeTab", "tabs"],
+    "background": {
+        "scripts": ["background.js"],
+        "persistent": false
+    },
+    "page_action": {
+        "default_popup": "popup.html"
+    },
+    "options_page": "options.html",
+    "manifest_version": 2
+}
