@@ -50,7 +50,18 @@ func main() {
 	var unique bool
 	flag.BoolVar(&unique, "u", false, "only print unique lines")
 
+	var port string
+	flag.StringVar(&port, "p", "8080", "port to listen on")
+
+	var address string
+	flag.StringVar(&address, "a", "0.0.0.0", "address to listen on")
+
 	flag.Parse()
+
+	if os.Getenv("WEBPASTE_TOKEN") == "" {
+		fmt.Fprintln(os.Stderr, "WEBPASTE_TOKEN is not set")
+		return
+	}
 
 	bus = make(chan []string)
 
@@ -69,5 +80,5 @@ func main() {
 	}()
 
 	http.HandleFunc("/", payloadHandler)
-	http.ListenAndServe(":8443", nil)
+	http.ListenAndServe(address+":"+port, nil)
 }

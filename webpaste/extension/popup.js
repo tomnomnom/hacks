@@ -1,11 +1,10 @@
 let buttons = document.getElementById('buttons')
 
 chrome.storage.sync.get('config', function(data){
-    console.log('one',data)
-    if (!data.config || !data.config.snippets){
+    if (!data.config || !data.config.snippets || data.config.snippets.length < 1){
+        buttons.innerText = "No snippets set"
         return
     }
-    console.log('two',data)
 
     data.config.snippets.map(s => {
         console.log(s)
@@ -15,7 +14,6 @@ chrome.storage.sync.get('config', function(data){
 
 
 buttons.addEventListener('click', function(e){
-
 
     chrome.storage.sync.get('config', function(data){
         if (!data.config){
