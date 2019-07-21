@@ -1,6 +1,21 @@
-let copy = document.getElementById('copy')
+let buttons = document.getElementById('buttons')
 
-copy.addEventListener('click', function(e){
+chrome.storage.sync.get('config', function(data){
+    console.log('one',data)
+    if (!data.config || !data.config.snippets){
+        return
+    }
+    console.log('two',data)
+
+    data.config.snippets.map(s => {
+        console.log(s)
+        buttons.appendChild(buttonTemplate(s))
+    })
+})
+
+
+buttons.addEventListener('click', function(e){
+
 
     chrome.storage.sync.get('config', function(data){
         if (!data.config){
@@ -11,8 +26,8 @@ copy.addEventListener('click', function(e){
 
         let server = data.config.server || 'localhost'
         let token = data.config.token || 'notoken'
-        let snippet = data.config.snippet || '// Snippet'
-        let postSnippet = data.config.postSnippet || ''
+        let snippet = e.target.dataset.code
+        let postSnippet = e.target.dataset.onsuccess
 
         chrome.tabs.query({active: true, currentWindow: true}, function(tabs){
             chrome.tabs.executeScript(
@@ -44,3 +59,17 @@ copy.addEventListener('click', function(e){
     })
 
 })
+
+function buttonTemplate(data){
+    let dp = new DOMParser()
+    let button = dp.parseFromString(`
+        <button></button>
+    `, 'text/html').querySelector('button')
+
+    button.innerText = data.name
+    button.value = data.name
+    button.dataset.code = data.code
+    button.dataset.onsuccess = data.onsuccess
+
+    return button
+}

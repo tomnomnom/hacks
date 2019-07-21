@@ -7,8 +7,6 @@
             }
 
             button {
-                height: 30px;
-                width: 60px;
                 outline: none;
             }
 
@@ -16,6 +14,7 @@
                 display: block;
                 font-weight: bold;
                 margin-bottom: 0.5rem;
+                margin-top: 0.5rem;
             }
 
             div.setting {
@@ -23,12 +22,21 @@
             }
 
             input, textarea {
-                width: 500px;
+                width: 700px;
+            }
+            textarea {
+                height: 50px;
+            }
+
+            div.snippet {
+                padding: 1rem;
+                background-color: hsl(0, 0%, 90%);
             }
         </style>
     </head>
     <body>
         <h1>webpaste options</h1>
+
         <div class=setting>
             <label for=server>Server:</label>
             <input type=text id=server>
@@ -39,14 +47,12 @@
             <input type=text id=token>
         </div>
 
-        <div class=setting>
-            <label for=snippet>Snippet:</label>
-            <textarea id=snippet rows=10 cols=50></textarea>
+        <h2>Snippets</h2>
+        <div id=snippets>
         </div>
 
         <div class=setting>
-            <label for=postSnippet>Post Snippet:</label>
-            <textarea id=postSnippet rows=10 cols=50></textarea>
+            <button id=add>Add Snippet</button>
         </div>
 
         <div class=setting>
