@@ -1,0 +1,8 @@
+# webpaste
+
+Maybe it should be webpipe? I think that's taken though.
+
+## TODO
+* Multiple snippets
+* Site match rules for snippets
+* Proper error handling (maybe)
