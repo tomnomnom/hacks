@@ -1,0 +1,15 @@
+Google URLs
+[...document.querySelectorAll('div.r>a:first-child')].map(n=>n.href)
+document.location=document.querySelectorAll('a#pnnext')[0].href;
+
+GitHub Results
+[...document.querySelectorAll('#code_search_results a.text-bold')].map(n=>n.href)
+document.location=document.querySelectorAll('a.next_page')[0].href;
+
+Yandex
+[...document.querySelectorAll('div.organic__path a.link[href]')].map(el => el.href)
+document.location=document.querySelector('a.pager__item_kind_next').href
+
+Gist Results
+[...document.querySelectorAll('div.gist-snippet-meta span > a:nth-child(2)')].map(n=>n.href)
+document.location=document.querySelectorAll('a.next_page')[0].href;
