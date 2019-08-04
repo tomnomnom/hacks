@@ -1,0 +1,6 @@
+# cors-blimey
+
+CORS Scanner.
+
+# TODO
+* `i have also seen stuff like they don't allow target.com.evil.com or anything after the first . but if you put target.anothertld it works. Then you just purcahse that domain and you are set to go`
