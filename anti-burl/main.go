@@ -10,16 +10,22 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strings"
 	"sync"
 	"time"
+	"unicode/utf8"
 )
 
 var (
+	aliveHosts = make(map[string]struct{})
+	aliveMutex = &sync.Mutex{}
+
 	client    *http.Client
 	transport *http.Transport
 	wg        sync.WaitGroup
 
-	concurrency = 20
+	concurrency = 50
+	maxSize     = int64(1024000)
 )
 
 func main() {
@@ -48,10 +54,10 @@ func main() {
 				InsecureSkipVerify: true,
 			},
 		},
+		Timeout: 5 * time.Second,
 		CheckRedirect: func(_ *http.Request, _ []*http.Request) error {
 			return http.ErrUseLastResponse
 		},
-		Timeout: 5 * time.Second,
 	}
 
 	semaphore := make(chan bool, concurrency)
@@ -60,22 +66,21 @@ func main() {
 		raw := sc.Text()
 		wg.Add(1)
 		semaphore <- true
-
 		go func(raw string) {
 			defer wg.Done()
 			u, err := url.ParseRequestURI(raw)
 			if err != nil {
 				return
 			}
-			resp, err := fetchURL(u)
+			resp, ws, err := fetchURL(u)
 			if err != nil {
 				return
 			}
-			if resp.StatusCode == http.StatusOK {
-				fmt.Println(u)
+			if resp.StatusCode <= 300 || resp.StatusCode >= 500 {
+				fmt.Printf("%-3d %-9d %-5d %s\n", resp.StatusCode, resp.ContentLength, ws, u.String())
 			}
-			<-semaphore
 		}(raw)
+		<-semaphore
 	}
 
 	wg.Wait()
@@ -85,21 +90,31 @@ func main() {
 	}
 }
 
-func fetchURL(u *url.URL) (*http.Response, error) {
+func fetchURL(u *url.URL) (*http.Response, int, error) {
+	wordsSize := 0
+
 	req, err := http.NewRequest("GET", u.String(), nil)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
 	req.Header.Set("User-Agent", "burl/0.1")
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
 	defer resp.Body.Close()
+
+	if resp.ContentLength <= maxSize {
+		if respbody, err := ioutil.ReadAll(resp.Body); err == nil {
+			resp.ContentLength = int64(utf8.RuneCountInString(string(respbody)))
+			wordsSize = len(strings.Split(string(respbody), " "))
+		}
+	}
+
 	io.Copy(ioutil.Discard, resp.Body)
 
-	return resp, err
+	return resp, wordsSize, err
 }
