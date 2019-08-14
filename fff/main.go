@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"strings"
 	"sync"
 	"time"
 )
@@ -68,14 +69,37 @@ func main() {
 				fmt.Fprintf(os.Stderr, "failed to create file: %s\n", err)
 				return
 			}
+			defer f.Close()
 
-			// TODO: write response headers to a second file
 			_, err = io.Copy(f, resp.Body)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "failed to write file contents: %s\n", err)
 				return
 			}
 
+			headersPath := path.Join(prefix, req.URL.Hostname(), fmt.Sprintf("%x.headers", hash))
+			headersFile, err := os.Create(headersPath)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "failed to create file: %s\n", err)
+				return
+			}
+			defer headersFile.Close()
+
+			var buf strings.Builder
+			buf.WriteString(fmt.Sprintf("%s\n\n", rawURL))
+			for k, vs := range resp.Header {
+				for _, v := range vs {
+					buf.WriteString(fmt.Sprintf("%s: %s\n", k, v))
+				}
+			}
+
+			_, err = io.Copy(headersFile, strings.NewReader(buf.String()))
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "failed to write file contents: %s\n", err)
+				return
+			}
+
+			// output the body filename for each URL
 			fmt.Printf("%s: %s\n", p, rawURL)
 
 		}()
