@@ -21,6 +21,9 @@ func main() {
 	var sep string
 	flag.StringVar(&sep, "sep", "", "separator string")
 
+	var noRepeats bool
+	flag.BoolVar(&noRepeats, "no-repeats", false, "use each line of input only once per sequence")
+
 	flag.Parse()
 
 	if maxDepth < 1 || maxDepth > 16 {
@@ -37,14 +40,14 @@ func main() {
 	}
 
 	p := &permutator{
-		maxDepth: maxDepth,
-		alphabet: alphabet,
-		sep:      sep,
-		prefix:   prefix,
-		suffix:   suffix,
+		maxDepth:  maxDepth,
+		sep:       sep,
+		prefix:    prefix,
+		suffix:    suffix,
+		noRepeats: noRepeats,
 	}
 
-	perms := p.list("")
+	perms := p.list("", alphabet)
 
 	for _, perm := range perms {
 		fmt.Println(perm)
@@ -53,15 +56,15 @@ func main() {
 }
 
 type permutator struct {
-	depth    int
-	maxDepth int
-	alphabet []string
-	sep      string
-	prefix   string
-	suffix   string
+	depth     int
+	maxDepth  int
+	sep       string
+	prefix    string
+	suffix    string
+	noRepeats bool
 }
 
-func (p *permutator) list(context string) []string {
+func (p *permutator) list(context string, alphabet []string) []string {
 	out := make([]string, 0)
 
 	if p.depth == p.maxDepth {
@@ -75,11 +78,18 @@ func (p *permutator) list(context string) []string {
 		context = p.prefix
 	}
 
-	for _, a := range p.alphabet {
+	for i, a := range alphabet {
 		newPerm := context + sep + a
 		out = append(out, newPerm+p.suffix)
+
+		newAlpha := make([]string, len(alphabet))
+		copy(newAlpha, alphabet)
+		if p.noRepeats {
+			newAlpha = append(newAlpha[:i], newAlpha[i+1:]...)
+		}
+
 		p.depth++
-		out = append(out, p.list(newPerm)...)
+		out = append(out, p.list(newPerm, newAlpha)...)
 	}
 	p.depth--
 	return out
