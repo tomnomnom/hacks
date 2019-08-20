@@ -42,6 +42,7 @@ func main() {
 				".phtml",
 				".asp",
 				".aspx",
+				".asmx",
 				".ashx",
 				".cgi",
 				".pl",
