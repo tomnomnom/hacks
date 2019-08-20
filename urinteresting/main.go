@@ -42,6 +42,8 @@ func main() {
 				".phtml",
 				".asp",
 				".aspx",
+				".asmx",
+				".ashx",
 				".cgi",
 				".pl",
 				".json",
@@ -57,6 +59,7 @@ func main() {
 				".mkd",
 				".do",
 				".jsp",
+				".jspa",
 			}
 
 			p := strings.ToLower(u.EscapedPath())
@@ -78,7 +81,10 @@ func main() {
 				strings.Contains(p, "include") ||
 				strings.Contains(p, "src") ||
 				strings.Contains(p, "redirect") ||
-				strings.Contains(p, "proxy")
+				strings.Contains(p, "proxy") ||
+				strings.Contains(p, "test") ||
+				strings.Contains(p, "tmp") ||
+				strings.Contains(p, "temp")
 		},
 
 		// non-standard port
@@ -192,6 +198,7 @@ func isBoringStaticFile(u *url.URL) bool {
 		".jpg",
 		".jpeg",
 		".gif",
+		".ico",
 	}
 
 	p := strings.ToLower(u.EscapedPath())
