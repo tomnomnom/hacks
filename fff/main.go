@@ -24,11 +24,18 @@ func main() {
 	var delayMs int
 	flag.IntVar(&delayMs, "delay", 100, "delay between issuing requests (ms)")
 
+	var outputDir string
+	flag.StringVar(&outputDir, "output", "out", "output directory")
+
+	var headers headerArgs
+	flag.Var(&headers, "header", "")
+	flag.Var(&headers, "H", "")
+
 	flag.Parse()
 
 	delay := time.Duration(delayMs * 1000000)
 	client := newClient(keepAlives)
-	prefix := "out"
+	prefix := outputDir
 
 	var wg sync.WaitGroup
 
@@ -43,12 +50,24 @@ func main() {
 		go func() {
 			defer wg.Done()
 
+			// create the request
 			req, err := http.NewRequest("GET", rawURL, nil)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "failed to create request: %s\n", err)
 				return
 			}
 
+			// add headers to the request
+			for _, h := range headers {
+				parts := strings.SplitN(h, ":", 2)
+
+				if len(parts) != 2 {
+					continue
+				}
+				req.Header.Set(parts[0], parts[1])
+			}
+
+			// send the request
 			resp, err := client.Do(req)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "request failed: %s\n", err)
@@ -56,6 +75,7 @@ func main() {
 			}
 			defer resp.Body.Close()
 
+			// output files are prefix/domain/hash.(body|headers)
 			hash := sha1.Sum([]byte(rawURL))
 			p := path.Join(prefix, req.URL.Hostname(), fmt.Sprintf("%x.body", hash))
 			err = os.MkdirAll(path.Dir(p), 0750)
@@ -64,6 +84,7 @@ func main() {
 				return
 			}
 
+			// create the body file
 			f, err := os.Create(p)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "failed to create file: %s\n", err)
@@ -77,6 +98,7 @@ func main() {
 				return
 			}
 
+			// create the headers file
 			headersPath := path.Join(prefix, req.URL.Hostname(), fmt.Sprintf("%x.headers", hash))
 			headersFile, err := os.Create(headersPath)
 			if err != nil {
@@ -87,9 +109,18 @@ func main() {
 
 			var buf strings.Builder
 			buf.WriteString(fmt.Sprintf("%s\n\n", rawURL))
+
+			// add the request headers
+			for _, h := range headers {
+				buf.WriteString(fmt.Sprintf("> %s\n", h))
+			}
+
+			buf.WriteRune('\n')
+
+			// add the response headers
 			for k, vs := range resp.Header {
 				for _, v := range vs {
-					buf.WriteString(fmt.Sprintf("%s: %s\n", k, v))
+					buf.WriteString(fmt.Sprintf("< %s: %s\n", k, v))
 				}
 			}
 
@@ -132,4 +163,15 @@ func newClient(keepAlives bool) *http.Client {
 		Timeout:       time.Second * 10,
 	}
 
+}
+
+type headerArgs []string
+
+func (h *headerArgs) Set(val string) error {
+	*h = append(*h, val)
+	return nil
+}
+
+func (h headerArgs) String() string {
+	return "string"
 }
