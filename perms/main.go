@@ -13,7 +13,7 @@ import (
 func main() {
 
 	var depths depthArgs
-	flag.Var(&depths, "depth", "depth of recursion to output; individual numbers, ranges (2-5), and lists (2,5) supported. Default: 1,2")
+	flag.Var(&depths, "depth", "recursion depth; individual numbers, ranges (2-5), and lists (2,5) supported. Default: 1,2")
 
 	var prefix string
 	flag.StringVar(&prefix, "prefix", "", "prefix string")
@@ -21,8 +21,8 @@ func main() {
 	var suffix string
 	flag.StringVar(&suffix, "suffix", "", "suffix string")
 
-	var sep string
-	flag.StringVar(&sep, "sep", "", "separator string")
+	var seps sepArgs
+	flag.Var(&seps, "sep", "separator string (can be specified multiple times)")
 
 	var noRepeats bool
 	flag.BoolVar(&noRepeats, "no-repeats", false, "use each line of input only once per sequence")
@@ -31,6 +31,10 @@ func main() {
 
 	if len(depths) == 0 {
 		depths = append(depths, 1, 2)
+	}
+
+	if len(seps) == 0 {
+		seps = append(seps, "")
 	}
 
 	alphabet := make([]string, 0)
@@ -43,7 +47,7 @@ func main() {
 
 	p := &permutator{
 		depths:    depths,
-		sep:       sep,
+		seps:      seps,
 		prefix:    prefix,
 		suffix:    suffix,
 		noRepeats: noRepeats,
@@ -60,7 +64,7 @@ func main() {
 type permutator struct {
 	depth     int
 	depths    depthArgs
-	sep       string
+	seps      sepArgs
 	prefix    string
 	suffix    string
 	noRepeats bool
@@ -74,27 +78,32 @@ func (p *permutator) list(context string, alphabet []string) []string {
 		return out
 	}
 
-	sep := p.sep
-	if context == "" {
-		sep = ""
-		context = p.prefix
-	}
-
 	for i, a := range alphabet {
-		newPerm := context + sep + a
 
-		if p.shouldOutput() {
-			out = append(out, newPerm+p.suffix)
-		}
-
+		// make a copy of the alphabet so that we can potentially
+		// remove the 'letter' in use if --no-repeats is specified
 		newAlpha := make([]string, len(alphabet))
 		copy(newAlpha, alphabet)
 		if p.noRepeats {
 			newAlpha = append(newAlpha[:i], newAlpha[i+1:]...)
 		}
 
-		p.depth++
-		out = append(out, p.list(newPerm, newAlpha)...)
+		for _, sep := range p.seps {
+
+			if context == "" {
+				sep = ""
+				context = p.prefix
+			}
+
+			newPerm := context + sep + a
+
+			if p.shouldOutput() {
+				out = append(out, newPerm+p.suffix)
+			}
+
+			p.depth++
+			out = append(out, p.list(newPerm, newAlpha)...)
+		}
 	}
 	p.depth--
 	return out
@@ -191,4 +200,15 @@ func (d depthArgs) max() int {
 		}
 	}
 	return max
+}
+
+type sepArgs []string
+
+func (s *sepArgs) Set(val string) error {
+	*s = append(*s, val)
+	return nil
+}
+
+func (s *sepArgs) String() string {
+	return strings.Join(*s, ",")
 }
