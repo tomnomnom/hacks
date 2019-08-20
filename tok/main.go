@@ -16,6 +16,10 @@ func main() {
 
 	var alphaNumOnly bool
 	flag.BoolVar(&alphaNumOnly, "alpha-num-only", false, "return only strings containing at least one letter and one number")
+
+	var delimExceptions string
+	flag.StringVar(&delimExceptions, "delim-exceptions", "", "don't use the characters provided as delimiters")
+
 	flag.Parse()
 
 	r := bufio.NewReader(os.Stdin)
@@ -49,7 +53,7 @@ func main() {
 			includesNumbers = true
 		}
 
-		if !l && !n && !isCommonRune(r) {
+		if !l && !n && !isDelimException(r, delimExceptions) {
 			if out.Len() == 0 {
 				continue
 			}
@@ -89,11 +93,12 @@ func main() {
 
 }
 
-func isCommonRune(r rune) bool {
-	return r == '-'
-	// r == '=' ||
-	// r == '%' ||
-	// r == '+' ||
-	// r == '\\' ||
-	// r == '@'
+func isDelimException(r rune, delims string) bool {
+	for _, comp := range delims {
+		if r == comp {
+			return true
+		}
+	}
+
+	return false
 }
