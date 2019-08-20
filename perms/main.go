@@ -2,22 +2,18 @@ package main
 
 import (
 	"bufio"
+	"errors"
 	"flag"
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 )
 
 func main() {
 
 	var depths depthArgs
-	flag.Var(&depths, "depth", "depth of recursion to output (can be used multiple times)")
-
-	var maxDepth int
-	flag.IntVar(&maxDepth, "max-depth", 3, "maximum recursion depth (cannot be used with --depth)")
-
-	var minDepth int
-	flag.IntVar(&minDepth, "min-depth", 1, "minimum recursion depth (cannot be used with --depth)")
+	flag.Var(&depths, "depth", "depth of recursion to output; individual numbers, ranges (2-5), and lists (2,5) supported. Default: 1,2")
 
 	var prefix string
 	flag.StringVar(&prefix, "prefix", "", "prefix string")
@@ -33,14 +29,8 @@ func main() {
 
 	flag.Parse()
 
-	if maxDepth < 1 || maxDepth > 16 {
-		fmt.Fprintln(os.Stderr, "depth can only be 1-16")
-		return
-	}
-
-	if minDepth < 1 || minDepth > maxDepth {
-		fmt.Fprintln(os.Stderr, "min-depth can only be 1 to max-depth")
-		return
+	if len(depths) == 0 {
+		depths = append(depths, 1, 2)
 	}
 
 	alphabet := make([]string, 0)
@@ -53,8 +43,6 @@ func main() {
 
 	p := &permutator{
 		depths:    depths,
-		maxDepth:  maxDepth,
-		minDepth:  minDepth,
 		sep:       sep,
 		prefix:    prefix,
 		suffix:    suffix,
@@ -72,8 +60,6 @@ func main() {
 type permutator struct {
 	depth     int
 	depths    depthArgs
-	maxDepth  int
-	minDepth  int
 	sep       string
 	prefix    string
 	suffix    string
@@ -116,41 +102,66 @@ func (p *permutator) list(context string, alphabet []string) []string {
 }
 
 func (p *permutator) shouldOutput() bool {
-	// The list of depths takes priority over the min and max depths.
 	// The user provides a one-indexed list of depths, but we're dealing
 	// with a zero-indexed list so we have to add 1 to the current depth
-	if len(p.depths) > 0 && p.depths.includes(p.depth+1) {
+	if p.depths.includes(p.depth + 1) {
 		return true
 	}
 
-	// if we got to here and there's at least one depth option set, don't output
-	if len(p.depths) > 0 {
-		return false
-	}
-
-	// we only need one last check for being past the minimum depth as the
-	// max depth is used to stop the recusion and is handled in p.shouldStop()
-	return p.depth >= (p.minDepth - 1)
+	return false
 }
 
 func (p *permutator) shouldStop() bool {
-	// if there are depth flags and we're at max depth it's time to stop
-	if len(p.depths) > 0 && p.depth == p.depths.max() {
+	if p.depth == p.depths.max() {
 		return true
 	}
 
-	// if there are depth flags and we didn't stop above, keep going :)
-	if len(p.depths) > 0 {
-		return false
-	}
-
-	// fall back to checking the max depth
-	return p.depth == p.maxDepth
+	return false
 }
 
 type depthArgs []int
 
 func (d *depthArgs) Set(val string) error {
+
+	// list
+	if strings.ContainsRune(val, ',') {
+		vals := strings.Split(val, ",")
+		for _, v := range vals {
+			i, err := strconv.Atoi(v)
+			if err != nil {
+				return err
+			}
+			*d = append(*d, i)
+		}
+		return nil
+	}
+
+	// range
+	if strings.ContainsRune(val, '-') {
+		parts := strings.SplitN(val, "-", 2)
+
+		min, err := strconv.Atoi(parts[0])
+		if err != nil {
+			return err
+		}
+
+		max, err := strconv.Atoi(parts[1])
+		if err != nil {
+			return err
+		}
+
+		if min >= max {
+			return errors.New("range maximum must be more than range minimum")
+		}
+
+		for i := min; i <= max; i++ {
+			*d = append(*d, i)
+		}
+
+		return nil
+	}
+
+	// default to an individual number
 	i, err := strconv.Atoi(val)
 	if err != nil {
 		return err
