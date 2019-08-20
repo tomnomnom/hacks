@@ -3,4 +3,4 @@
 A tool for generating lots of permutations of lines provided on stdin.
 
 **WARNING**: if you provide too many lines of input, specify too high of a depth, or too many separators (or any combination of those),
-you will produce more combinations than you have RAM/disk space/time left on earth. Don't day I didn't warn you.
+you will produce more combinations than you have RAM/disk space/time left on earth. Don't say I didn't warn you.
