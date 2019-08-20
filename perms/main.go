@@ -53,11 +53,7 @@ func main() {
 		noRepeats: noRepeats,
 	}
 
-	perms := p.list("", alphabet)
-
-	for _, perm := range perms {
-		fmt.Println(perm)
-	}
+	p.list("", alphabet)
 
 }
 
@@ -70,12 +66,11 @@ type permutator struct {
 	noRepeats bool
 }
 
-func (p *permutator) list(context string, alphabet []string) []string {
-	out := make([]string, 0)
+func (p *permutator) list(context string, alphabet []string) {
 
 	if p.shouldStop() {
 		p.depth--
-		return out
+		return
 	}
 
 	for i, a := range alphabet {
@@ -98,15 +93,15 @@ func (p *permutator) list(context string, alphabet []string) []string {
 			newPerm := context + sep + a
 
 			if p.shouldOutput() {
-				out = append(out, newPerm+p.suffix)
+				fmt.Println(newPerm + p.suffix)
 			}
 
 			p.depth++
-			out = append(out, p.list(newPerm, newAlpha)...)
+			p.list(newPerm, newAlpha)
 		}
 	}
 	p.depth--
-	return out
+	return
 
 }
 
