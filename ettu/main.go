@@ -61,6 +61,7 @@ func brute(suffix string, words []string, out chan string, depth, maxDepth int) 
 		_, err := net.LookupHost(candidate)
 
 		if err != nil {
+			// need a DNSError so we can check some of its fields
 			nerr, ok := err.(*net.DNSError)
 			if !ok {
 				_ = nerr
@@ -73,6 +74,9 @@ func brute(suffix string, words []string, out chan string, depth, maxDepth int) 
 			}
 		}
 
+		// recurse for any candidate that either resolves or
+		// isn't specifically a 'no such host' error as it may
+		// have other subdomains which resolve
 		wg.Add(1)
 		go func() {
 			brute(candidate, words, out, depth+1, maxDepth)
@@ -83,6 +87,7 @@ func brute(suffix string, words []string, out chan string, depth, maxDepth int) 
 			continue
 		}
 
+		// output any name that didn't have an error (i.e. it resolves)
 		out <- candidate
 	}
 
