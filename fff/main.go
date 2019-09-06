@@ -7,6 +7,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net"
 	"net/http"
 	"os"
@@ -21,6 +22,9 @@ func main() {
 	var keepAlives bool
 	flag.BoolVar(&keepAlives, "keep-alive", false, "use HTTP keep-alives")
 
+	var saveResponses bool
+	flag.BoolVar(&saveResponses, "save", false, "save responses")
+
 	var delayMs int
 	flag.IntVar(&delayMs, "delay", 100, "delay between issuing requests (ms)")
 
@@ -28,8 +32,8 @@ func main() {
 	flag.StringVar(&outputDir, "output", "out", "output directory")
 
 	var headers headerArgs
-	flag.Var(&headers, "header", "")
-	flag.Var(&headers, "H", "")
+	flag.Var(&headers, "header", "add a header to the request")
+	flag.Var(&headers, "H", "add a header to the request")
 
 	flag.Parse()
 
@@ -74,6 +78,12 @@ func main() {
 				return
 			}
 			defer resp.Body.Close()
+
+			if !saveResponses {
+				_, _ = io.Copy(ioutil.Discard, resp.Body)
+				fmt.Printf("%s %d\n", rawURL, resp.StatusCode)
+				return
+			}
 
 			// output files are prefix/domain/hash.(body|headers)
 			hash := sha1.Sum([]byte(rawURL))
@@ -131,8 +141,7 @@ func main() {
 			}
 
 			// output the body filename for each URL
-			fmt.Printf("%s: %s\n", p, rawURL)
-
+			fmt.Printf("%s: %s %d\n", p, rawURL, resp.StatusCode)
 		}()
 	}
 
