@@ -3,6 +3,9 @@ const path = require('path')
 const app = express()
 const port = 3000
 
+// serve static files from the static dir
+app.use('/static', express.static('static'))
+
 // use ejs files in ./views
 app.set('views', path.join(__dirname, 'views'));
 
