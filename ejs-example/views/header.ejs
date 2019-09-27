@@ -2,7 +2,9 @@
 
 <% if(!user){ %>
     <% include login.ejs %>
+    <a href=/register>Register</a>
 <% } else { %>
     <strong>Hello, <%= user %>!</strong>
+    <a href=/logout>Logout</a>
 <% } %>
 

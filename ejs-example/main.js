@@ -30,6 +30,21 @@ app.set('view engine', 'ejs');
 // we're going to POST urlencoded data
 app.use(express.urlencoded())
 
+app.get('/register', (req, res) => {
+    res.render('register')
+})
+
+app.post('/register', async (req, res) => {
+    let saltRounds = 9
+    let hash = await bcrypt.hash(req.body.password, saltRounds)
+
+    users[req.body.username] = {
+        hash: hash
+    }
+
+    res.redirect('/')
+})
+
 app.post('/login', async (req, res) => {
     if (!users[req.body.username]){
         res.render("error", {
@@ -50,12 +65,12 @@ app.post('/login', async (req, res) => {
     }
 
     req.session.user = req.body.username
-    res.redirect(301, '/')
+    res.redirect(302, '/')
 })
 
 app.get('/logout', (req, res) => {
     req.session.user = null
-    res.redirect(301, '/')
+    res.redirect(302, '/')
 })
 
 app.get('/', (req, res) => {
