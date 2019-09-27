@@ -1,4 +1,8 @@
 <h1>This is the header</h1>
-<p>
-    You have viewed this page <%= views %> time(s).
-</p>
+
+<% if(!user){ %>
+    <% include login.ejs %>
+<% } else { %>
+    <strong>Hello, <%= user %>!</strong>
+<% } %>
+
