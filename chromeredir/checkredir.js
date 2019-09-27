@@ -1,22 +1,39 @@
-const puppeteer = require('puppeteer');
+const puppeteer = require('puppeteer')
+const readline = require('readline');
 
-if (!process.argv[2]) {
-    console.log("usage: node checkredir.js <URL>")
-    process.exit(1);
-}
+const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+    terminal: false
+});
 
-url = process.argv[2];
+var urls = []
+rl.on('line', async (url) => {
+    urls.push(url)
+})
 
-(async () => {
-  const browser = await puppeteer.launch({ignoreHTTPSErrors: true});
-  const page = await browser.newPage();
-  await page.goto(url);
+rl.on('close', async () => {
+    const browser = await puppeteer.launch({ignoreHTTPSErrors: true})
 
-  const finalLocation = await page.evaluate(() => {
-    return document.location.href;
-  });
+    Promise.all(urls.map(url => {
+        return new Promise(async (resolve) => {
+            var page = await browser.newPage()
+            await page.goto(url)
+            var destination = await page.evaluate(() => {
+                return {"domain": document.domain, "href": document.location.href}
+            })
 
-  console.log('Final URL:', finalLocation);
+            var u = new URL(url)
 
-  await browser.close();
-})();
+            if (u.host != destination.domain){
+                resolve(`${url} redirects to ${destination.href}`)
+            } else {
+                resolve(null)
+            }
+        })
+    })).then((values) => {
+        console.log(values.filter(v => v != null).join('\n')) 
+        browser.close()
+    })
+
+})
