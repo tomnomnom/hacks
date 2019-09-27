@@ -5,7 +5,8 @@
   "main": "main.js",
   "dependencies": {
     "ejs": "^2.7.1",
-    "express": "^4.17.1"
+    "express": "^4.17.1",
+    "express-session": "^1.16.2"
   },
   "devDependencies": {},
   "scripts": {
