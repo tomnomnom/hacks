@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"flag"
 	"fmt"
+	"io"
 	"net"
 	"os"
 	"sync"
@@ -13,21 +14,30 @@ func main() {
 
 	var depth int
 	flag.IntVar(&depth, "depth", 4, "max recursion depth")
+	flag.IntVar(&depth, "d", 4, "max recursion depth")
 
 	flag.Parse()
 
 	suffix := flag.Arg(0)
 	wordListFile := flag.Arg(1)
 
-	if wordListFile == "" || suffix == "" {
-		fmt.Fprintln(os.Stderr, "usage: ettu [--depth=<int>] <domain> <wordfile>")
+	if suffix == "" {
+		fmt.Fprintln(os.Stderr, "usage: ettu [--depth=<int>] <domain> [<wordfile>|-]")
 		return
 	}
 
-	f, err := os.Open(wordListFile)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "failed to open word list: %s\n", err)
-		return
+	var f io.Reader
+	var err error
+
+	// default to stdin for the wordlist
+	f = os.Stdin
+
+	if wordListFile != "" && wordListFile != "-" {
+		f, err = os.Open(wordListFile)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "failed to open word list: %s\n", err)
+			return
+		}
 	}
 
 	sc := bufio.NewScanner(f)

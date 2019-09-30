@@ -1,0 +1,61 @@
+# ettu
+
+ettu is a recursive DNS brute-forcer that tries to avoid dead-ends.
+
+Like all tools in my hacks repo it's alpha-quality (at best) so you're
+likely to find rough edges. I'd still like to hear about issues with
+it though.
+
+## Install
+
+```
+go get -u github.com/tomnomnom/hacks/ettu
+```
+
+## Usage
+
+```
+usage: ettu [--depth=<int>] <domain> [<wordfile>|-]
+```
+
+### Examples
+
+```
+▶ cat wordlist | ettu --depth=2 example.com 
+```
+
+```
+▶ ettu example.com wordlist
+```
+
+
+## Dead-end Avoidance
+
+Ordinarily if there are no records to return for a DNS name you might expect an `NXDOMAIN` error:
+
+```
+▶ host four.tomnomnom.uk
+Host four.tomnomnom.uk not found: 3(NXDOMAIN)
+```
+
+You may have noticed that sometimes you get an empty response instead though:
+
+```
+▶ host three.tomnomnom.uk
+```
+
+The difference in the latter case is often that another name - one that has your queried name as a suffix -
+exists and has records to return:
+
+```
+▶ host one.two.three.tomnomnom.uk
+one.two.three.tomnomnom.uk has address 46.101.59.42
+```
+
+This difference in response can be used to help avoid dead-ends in recursive DNS
+brute-forcing by not recursing in the former situation:
+
+```
+▶ echo -e "www\none\ntwo\nthree" | ettu tomnomnom.uk
+one.two.three.tomnomnom.uk
+```
