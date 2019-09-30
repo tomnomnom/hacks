@@ -1,0 +1,25 @@
+<% include header %>
+
+<h2>Userlist</h2>
+
+<input type=text id=search>
+
+<ul id=userlist>
+</ul>
+
+<script>
+    let search = document.getElementById('search')
+    let userlist = document.getElementById('userlist')
+
+    search.addEventListener('keyup', async (e) => {
+        let r = await fetch('/api/users?q='+search.value)
+
+        let users = await r.json()
+
+        userlist.innerHTML = users.map(u => {
+            return `<li>${u}</li>`
+        }).join('\n')
+    
+    })
+    
+</script>

@@ -100,6 +100,29 @@ app.get('/', (req, res) => {
     })
 })
 
+app.get('/api/users', async (req, res) => {
+
+    try {
+        const db = client.db(dbName)
+        const users = await db.collection('users').find({
+            username: { $regex: '^' + req.query.q }
+        }).toArray()
+
+        res.json(users.map(u => u.username))
+
+    } catch(err) {
+        res.render("error", {
+            message: "Failed to list users"
+        }) 
+    }
+})
+
+app.get('/users', (req, res) => {
+    res.render('users', {
+        user: req.session.user
+    })
+})
+
 // Connect to mongo, and then start listening
 client.connect(() => {
     app.listen(port, () => console.log(`Example app listening on port ${port}!`))
