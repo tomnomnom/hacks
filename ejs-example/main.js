@@ -1,3 +1,4 @@
+const MongoClient = require('mongodb').MongoClient
 const express = require('express')
 const path = require('path')
 const session = require('express-session')
@@ -5,12 +6,15 @@ const bcrypt = require('bcrypt')
 const app = express()
 const port = 3000
 
-// mock user database
-const users = {
-    "sam": {hash: "$2b$09$a20ufU6tABLVLZeZE9Ry9uKRPILZqtmDbLbQQDdHpoJWjKNQYUBz2"},
-    "jen": {hash: "$2b$09$DwWboyxs3tz9EubWEH8pouzV54lvleQSNBktUVcy0YmDGF4Efslha"}
-}
+const url = "mongodb://localhost:27017"
+const dbName = "rushwebapp"
 
+const client = new MongoClient(url, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true
+});
+
+// mock user databas
 // serve static files from the static dir
 app.use('/static', express.static('static'))
 
@@ -35,37 +39,50 @@ app.get('/register', (req, res) => {
 })
 
 app.post('/register', async (req, res) => {
-    let saltRounds = 9
-    let hash = await bcrypt.hash(req.body.password, saltRounds)
+    try {
+        let saltRounds = 9
+        let hash = await bcrypt.hash(req.body.password, saltRounds)
 
-    users[req.body.username] = {
-        hash: hash
+        const db = client.db(dbName)
+        const users = db.collection('users')
+
+        await users.createIndex({username: 1}, {unique: true})
+        await users.insertOne({
+            username: req.body.username,
+            hash: hash
+        })
+
+        res.redirect('/')
+    } catch(err) {
+        console.log("registration error: ", err)
+        res.render("error", {
+            "message": "Failed to rernaegister. Sorry."
+        })
     }
-
-    res.redirect('/')
 })
 
 app.post('/login', async (req, res) => {
-    if (!users[req.body.username]){
+
+    try {
+        const db = client.db(dbName)
+        const users = db.collection('users')
+
+        const user = await users.findOne({username: req.body.username})
+
+        let success = await bcrypt.compare(req.body.password, user.hash)
+
+        if (!success){
+            throw "Bad username or password!"
+        }
+
+        req.session.user = req.body.username
+        res.redirect(302, '/')
+
+    } catch(err) {
         res.render("error", {
             message: "Bad username or password!"
         }) 
-        return
     }
-
-    let user = users[req.body.username]
-
-    let success = await bcrypt.compare(req.body.password, user.hash)
-
-    if (!success){
-        res.render("error", {
-            message: "Bad username or password!"
-        }) 
-        return
-    }
-
-    req.session.user = req.body.username
-    res.redirect(302, '/')
 })
 
 app.get('/logout', (req, res) => {
@@ -83,5 +100,8 @@ app.get('/', (req, res) => {
     })
 })
 
-app.listen(port, () => console.log(`Example app listening on port ${port}!`))
+// Connect to mongo, and then start listening
+client.connect(() => {
+    app.listen(port, () => console.log(`Example app listening on port ${port}!`))
+})
 
