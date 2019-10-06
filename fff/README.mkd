@@ -36,4 +36,9 @@ Options:
     save responses in the output dir
 ```
 
+## Tuning
+You might want to increase your open file descriptor limit before doing anything crazy:
 
+```
+▶ ulimit -n 16384
+```
