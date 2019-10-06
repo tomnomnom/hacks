@@ -1,0 +1,39 @@
+# fff
+
+The Fairly Fast Fetcher. Requests a bunch of URLs provided on stdin fairly quickly.
+
+The main idea is to launch a new request every `n` milliseconds, without waiting
+for the last request to finish first. This makes for consistently fast fetching,
+but can be hard on system resources (e.g. you might run out of file descriptors).
+The advantage though, is that hitting a bunch of very slow URLs or URLs that
+result in timeouts doesn't slow the overall progress very much.
+
+## Install
+
+```
+▶ go get -u github.com/tomnomnom/hacks/fff
+```
+
+## Usage
+
+Basic usage:
+```
+▶ cat urls.txt | fff
+```
+
+Options:
+
+```
+--delay <int>
+    delay between issuing requests (ms) (default 100)
+--header <string>, -H <string>
+    add a header to the request
+--keep-alive
+    use HTTP keep-alives
+--output <string>
+    output directory (default "out")
+--save
+    save responses in the output dir
+```
+
+
