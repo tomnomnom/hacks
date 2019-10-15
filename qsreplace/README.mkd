@@ -2,7 +2,7 @@
 
 ## This Tool Has Moved!
 
-I thought it was kinda useful so I moved it to [it's own repo](https://github.com/tomnomnom/qsreplace).
+I thought it was kinda useful so I moved it to [its own repo](https://github.com/tomnomnom/qsreplace).
 
 
 
