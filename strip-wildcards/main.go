@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"flag"
 	"fmt"
 	"math/rand"
 	"net"
@@ -19,6 +20,10 @@ func init() {
 }
 
 func main() {
+	var verbose bool
+	flag.BoolVar(&verbose, "v", false, "verbose mode (print lookup count to stderr when done)")
+	flag.Parse()
+
 	sc := bufio.NewScanner(os.Stdin)
 	r := &resolver{cache: make(map[string]bool)}
 
@@ -29,19 +34,25 @@ func main() {
 			fmt.Println(name)
 		}
 	}
+
+	if verbose {
+		fmt.Fprintf(os.Stderr, "DNS lookup count: %d\n", r.count)
+	}
 }
 
 type resolver struct {
 	cache map[string]bool
+	count int
 }
 
 func (r *resolver) isWildcard(name string) bool {
-	if r.cache[name] {
-		return true
+	if v, ok := r.cache[name]; ok {
+		return v
 	}
 
 	check := fmt.Sprintf("%s.%s", globalRandString, name)
 	_, err := net.LookupHost(check)
+	r.count++
 	r.cache[name] = err == nil
 	return err == nil
 }
