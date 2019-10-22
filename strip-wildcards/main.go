@@ -52,14 +52,13 @@ func (r *resolver) containsWildcard(name string) bool {
 
 	// Given one.two.target.com
 	// Start from the right hand side, check:
-	//   $rand.com
 	//   $rand.target.com
 	//   $rand.two.target.com
 	// Do not check $rand.one.two.target.com otherwise
 	// we'd just be resolving every line of input which
 	// is what we're trying to avoid doing.
-	for i := len(parts) - 1; i > 1; i-- {
-		candidate := strings.Join(parts[i-1:len(parts)], ".")
+	for i := len(parts) - 2; i > 0; i-- {
+		candidate := strings.Join(parts[i:len(parts)], ".")
 		if r.isWildcard(candidate) {
 			return true
 		}
