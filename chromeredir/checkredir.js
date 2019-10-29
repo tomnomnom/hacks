@@ -15,8 +15,7 @@ rl.on('line', async (url) => {
 rl.on('close', async () => {
     const browser = await puppeteer.launch({ignoreHTTPSErrors: true})
 
-    Promise.all(urls.map(url => {
-        return new Promise(async (resolve) => {
+    let values = await Promise.all(urls.map(async url => {
             var page = await browser.newPage()
             await page.goto(url)
             var destination = await page.evaluate(() => {
@@ -26,14 +25,13 @@ rl.on('close', async () => {
             var u = new URL(url)
 
             if (u.host != destination.domain){
-                resolve(`${url} redirects to ${destination.href}`)
+                return `${url} redirects to ${destination.href}`
             } else {
-                resolve(null)
+                return null
             }
-        })
-    })).then((values) => {
-        console.log(values.filter(v => v != null).join('\n')) 
-        browser.close()
-    })
-
+		})
+    )
+	console.log(values.filter(v => v != null).join('\n'))
+	browser.close()
 })
+
