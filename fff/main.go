@@ -12,28 +12,54 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
 )
 
+func init() {
+	flag.Usage = func() {
+		h := []string{
+			"Request URLs provided on stdin fairly frickin' fast",
+			"",
+			"Options:",
+			"  -d, --delay <delay>       Delay between issuing requests (ms)",
+			"  -H, --header <header>     Add a header to the request (can be specified multiple times)",
+			"  -o, --output <dir>        Directory to save responses in (will be created)",
+			"  -s, --save-status <code>  Save responses with given status code (can be specified multiple times)",
+			"  -S, --save                Save all responses",
+			"",
+		}
+
+		fmt.Fprintf(os.Stderr, strings.Join(h, "\n"))
+	}
+}
+
 func main() {
 
 	var keepAlives bool
-	flag.BoolVar(&keepAlives, "keep-alive", false, "use HTTP keep-alives")
+	flag.BoolVar(&keepAlives, "keep-alive", false, "")
 
 	var saveResponses bool
-	flag.BoolVar(&saveResponses, "save", false, "save responses")
+	flag.BoolVar(&saveResponses, "save", false, "")
+	flag.BoolVar(&saveResponses, "S", false, "")
 
 	var delayMs int
-	flag.IntVar(&delayMs, "delay", 100, "delay between issuing requests (ms)")
+	flag.IntVar(&delayMs, "delay", 100, "")
+	flag.IntVar(&delayMs, "d", 100, "")
 
 	var outputDir string
-	flag.StringVar(&outputDir, "output", "out", "output directory")
+	flag.StringVar(&outputDir, "output", "out", "")
+	flag.StringVar(&outputDir, "o", "out", "")
 
 	var headers headerArgs
-	flag.Var(&headers, "header", "add a header to the request")
-	flag.Var(&headers, "H", "add a header to the request")
+	flag.Var(&headers, "header", "")
+	flag.Var(&headers, "H", "")
+
+	var saveStatus saveStatusArgs
+	flag.Var(&saveStatus, "save-status", "")
+	flag.Var(&saveStatus, "s", "")
 
 	flag.Parse()
 
@@ -79,7 +105,9 @@ func main() {
 			}
 			defer resp.Body.Close()
 
-			if !saveResponses {
+			shouldSave := saveResponses || len(saveStatus) > 0 && saveStatus.Includes(resp.StatusCode)
+
+			if !shouldSave {
 				_, _ = io.Copy(ioutil.Discard, resp.Body)
 				fmt.Printf("%s %d\n", rawURL, resp.StatusCode)
 				return
@@ -183,4 +211,25 @@ func (h *headerArgs) Set(val string) error {
 
 func (h headerArgs) String() string {
 	return "string"
+}
+
+type saveStatusArgs []int
+
+func (s *saveStatusArgs) Set(val string) error {
+	i, _ := strconv.Atoi(val)
+	*s = append(*s, i)
+	return nil
+}
+
+func (s saveStatusArgs) String() string {
+	return "string"
+}
+
+func (s saveStatusArgs) Includes(search int) bool {
+	for _, status := range s {
+		if status == search {
+			return true
+		}
+	}
+	return false
 }
