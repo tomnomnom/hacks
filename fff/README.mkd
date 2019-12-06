@@ -41,3 +41,8 @@ You might want to increase your open file descriptor limit before doing anything
 ```
 ▶ ulimit -n 16384
 ```
+
+## TODO
+
+* Different methods and request bodies
+* Create an index file in the output directory

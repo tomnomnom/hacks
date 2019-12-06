@@ -26,6 +26,7 @@ func init() {
 			"Options:",
 			"  -d, --delay <delay>       Delay between issuing requests (ms)",
 			"  -H, --header <header>     Add a header to the request (can be specified multiple times)",
+			"  -k, --keep-alive          Use HTTP Keep-Alive",
 			"  -o, --output <dir>        Directory to save responses in (will be created)",
 			"  -s, --save-status <code>  Save responses with given status code (can be specified multiple times)",
 			"  -S, --save                Save all responses",
@@ -40,6 +41,8 @@ func main() {
 
 	var keepAlives bool
 	flag.BoolVar(&keepAlives, "keep-alive", false, "")
+	flag.BoolVar(&keepAlives, "keep-alives", false, "")
+	flag.BoolVar(&keepAlives, "k", false, "")
 
 	var saveResponses bool
 	flag.BoolVar(&saveResponses, "save", false, "")
