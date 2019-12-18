@@ -113,9 +113,12 @@ func main() {
 			}
 		}
 
-		if !first {
-			buf.WriteString("})()")
+		if first {
+			// we didn't find any matching event listeners
+			continue
 		}
+
+		buf.WriteString("})()")
 
 		raw := buf.String()
 		options := jsbeautifier.DefaultOptions()
