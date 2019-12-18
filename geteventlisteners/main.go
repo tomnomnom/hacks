@@ -10,6 +10,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/chromedp/chromedp"
 	"github.com/ditashi/jsbeautifier-go/jsbeautifier"
@@ -42,6 +43,9 @@ func main() {
 	flag.Var(&filters, "filter", "")
 	flag.Var(&filters, "f", "")
 
+	var verbose bool
+	flag.BoolVar(&verbose, "v", false, "verbose mode")
+
 	flag.Parse()
 
 	// default to stdin unless we have an arg to use
@@ -57,9 +61,15 @@ func main() {
 
 	for sc.Scan() {
 		ctx, cancel := chromedp.NewContext(parent)
+		ctx, cancel = context.WithTimeout(ctx, time.Second*20)
+
 		requestURL := sc.Text()
 
 		var res map[string][]string
+
+		if verbose {
+			fmt.Printf("requesting %s\n", requestURL)
+		}
 
 		err := chromedp.Run(ctx,
 			chromedp.Navigate(requestURL),
@@ -78,6 +88,7 @@ func main() {
 
 		if err != nil {
 			cancel()
+			// TODO: handle websocket timeout issue
 			fmt.Fprintf(os.Stderr, "%s\n", err)
 			continue
 		}
@@ -115,6 +126,9 @@ func main() {
 
 		if first {
 			// we didn't find any matching event listeners
+			if verbose {
+				fmt.Printf("no matching listeners on %s\n", requestURL)
+			}
 			cancel()
 			continue
 		}
