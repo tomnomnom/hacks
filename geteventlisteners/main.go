@@ -7,13 +7,41 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"regexp"
 	"strconv"
 	"strings"
 
 	"github.com/chromedp/chromedp"
+	"github.com/ditashi/jsbeautifier-go/jsbeautifier"
 )
 
+type filterArgs []string
+
+func (f *filterArgs) Set(val string) error {
+	*f = append(*f, val)
+	return nil
+}
+
+func (f filterArgs) String() string {
+	return "string"
+}
+
+func (f filterArgs) Includes(search string) bool {
+	search = strings.ToLower(search)
+	for _, filter := range f {
+		filter = strings.ToLower(filter)
+		if filter == search {
+			return true
+		}
+	}
+	return false
+}
+
 func main() {
+	var filters filterArgs
+	flag.Var(&filters, "filter", "")
+	flag.Var(&filters, "f", "")
+
 	flag.Parse()
 
 	// default to stdin unless we have an arg to use
@@ -54,10 +82,20 @@ func main() {
 			continue
 		}
 
-		// TODO: provide option to write one output file per request
-		fmt.Printf("// %s\n", requestURL)
-		fmt.Println("(function(){")
+		buf := &strings.Builder{}
+		first := true
 		for event, listeners := range res {
+
+			if len(filters) > 0 && !filters.Includes(event) {
+				continue
+			}
+
+			if first {
+				fmt.Fprintf(buf, "// %s\n", requestURL)
+				buf.WriteString("(function(){")
+				first = false
+			}
+
 			seen := make(map[string]bool)
 
 			for i, l := range listeners {
@@ -71,12 +109,41 @@ func main() {
 					suffix = ""
 				}
 
-				fmt.Printf("let on%s%s = %s\n\n", event, suffix, l)
+				fmt.Fprintf(buf, "    let on%s%s = %s\n\n", event, suffix, l)
 			}
 		}
-		fmt.Println("})()\n")
+
+		if !first {
+			buf.WriteString("})()")
+		}
+
+		raw := buf.String()
+		options := jsbeautifier.DefaultOptions()
+		out, err := jsbeautifier.Beautify(&raw, options)
+
+		if err != nil {
+			out = raw
+		}
+		fmt.Println(requestURL)
+
+		// TODO: organise files into one dir per domain
+		fn := genFilename(requestURL)
+		f, err := os.Create(fn)
+		fmt.Fprintf(f, "%s\n", out)
+		f.Close()
 
 		cancel()
 	}
 
+}
+
+func genFilename(u string) string {
+	re := regexp.MustCompile("[^a-zA-Z0-9_.-]")
+	fn := re.ReplaceAllString(u, "-")
+
+	// remove multiple dashes in a row
+	re = regexp.MustCompile("-+")
+	fn = re.ReplaceAllString(fn, "-")
+
+	return fmt.Sprintf("%s.js", fn)
 }
