@@ -115,6 +115,7 @@ func main() {
 
 		if first {
 			// we didn't find any matching event listeners
+			cancel()
 			continue
 		}
 
