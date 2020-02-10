@@ -76,9 +76,9 @@ func main() {
 			if err != nil {
 				return
 			}
-			//if resp.StatusCode <= 300 || resp.StatusCode >= 500 {
+			if resp.StatusCode <= 403 {
 				fmt.Printf("%-3d %-9d %-5d %s\n", resp.StatusCode, resp.ContentLength, ws, u.String())
-			//}
+			}
 		}(raw)
 		<-semaphore
 	}
