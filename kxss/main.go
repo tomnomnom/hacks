@@ -1,7 +1,7 @@
 package main
 
 import (
-	"flag"
+	"bufio"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -11,32 +11,33 @@ import (
 )
 
 func main() {
-	flag.Parse()
 
-	inputURL := flag.Arg(0)
+	sc := bufio.NewScanner(os.Stdin)
 
-	reflected, err := checkReflected(inputURL)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "error from checkReflected: %s\n", err)
-	}
-
-	fmt.Printf("reflected: %#v\n", reflected)
-
-	if len(reflected) == 0 {
-		fmt.Println("no params were reflected; stopping")
-		return
-	}
-
-	for _, r := range reflected {
-		worked, err := checkAppend(inputURL, r)
+	for sc.Scan() {
+		inputURL := sc.Text()
+		reflected, err := checkReflected(inputURL)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "error requesting %s with modified %s param: %s", inputURL, r, err)
+			fmt.Fprintf(os.Stderr, "error from checkReflected: %s\n", err)
+		}
+
+		if len(reflected) == 0 {
+			fmt.Printf("no params were reflected in %s\n", inputURL)
 			continue
 		}
-		if worked {
-			fmt.Printf("got reflection of param '%s' on %s", r, inputURL)
+
+		for _, r := range reflected {
+			worked, err := checkAppend(inputURL, r)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "error requesting %s with modified %s param: %s", inputURL, r, err)
+				continue
+			}
+			if worked {
+				fmt.Printf("got reflection of param '%s' on %s\n", r, inputURL)
+			}
 		}
 	}
+
 }
 
 func checkReflected(targetURL string) ([]string, error) {
