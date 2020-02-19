@@ -21,6 +21,22 @@ func main() {
 	}
 
 	fmt.Printf("reflected: %#v\n", reflected)
+
+	if len(reflected) == 0 {
+		fmt.Println("no params were reflected; stopping")
+		return
+	}
+
+	for _, r := range reflected {
+		worked, err := checkAppend(inputURL, r)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "error requesting %s with modified %s param: %s", inputURL, r, err)
+			continue
+		}
+		if worked {
+			fmt.Printf("got reflection of param '%s' on %s", r, inputURL)
+		}
+	}
 }
 
 func checkReflected(targetURL string) ([]string, error) {
@@ -59,4 +75,31 @@ func checkReflected(targetURL string) ([]string, error) {
 	}
 
 	return out, nil
+}
+
+func checkAppend(targetURL, param string) (bool, error) {
+	u, err := url.Parse(targetURL)
+	if err != nil {
+		return false, err
+	}
+
+	val := u.Query().Get(param)
+	if val == "" {
+		return false, fmt.Errorf("can't append to non-existant param %s", param)
+	}
+
+	u.Query().Set(param, val+"lol this should be a random string")
+
+	reflected, err := checkReflected(u.String())
+	if err != nil {
+		return false, err
+	}
+
+	for _, r := range reflected {
+		if r == param {
+			return true, nil
+		}
+	}
+
+	return false, nil
 }
