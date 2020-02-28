@@ -9,6 +9,7 @@ import (
 
 func TestSimple(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/html")
 		qs := r.URL.Query()
 		fmt.Fprintf(w, "hello, %s", qs.Get("name"))
 	}))
@@ -29,13 +30,14 @@ func TestSimple(t *testing.T) {
 
 func TestAppend(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/html")
 		qs := r.URL.Query()
 		fmt.Fprintf(w, "hello, %s", qs.Get("name"))
 	}))
 
 	defer ts.Close()
 
-	r, err := checkAppend(ts.URL+"?name=Mr%20Naughty", "name")
+	r, err := checkAppend(ts.URL+"?name=Mr%20Naughty", "name", "somerandomvalue")
 
 	if err != nil {
 		t.Fatalf("expected nil error from checkAppend(), have %s", err)
