@@ -14,7 +14,7 @@ import (
 	"time"
 )
 
-type appendCheck struct {
+type paramCheck struct {
 	url   string
 	param string
 }
@@ -40,96 +40,58 @@ func main() {
 
 	sc := bufio.NewScanner(os.Stdin)
 
-	initialChecks := make(chan string, 40)
-	appendChecks := make(chan appendCheck, 40)
-	charChecks := make(chan appendCheck, 40)
+	initialChecks := make(chan paramCheck, 40)
 
-	// initial check worker pool
-	var wgInitial sync.WaitGroup
-	for i := 0; i < 40; i++ {
-		wgInitial.Add(1)
-		go func() {
-			for inputURL := range initialChecks {
+	appendChecks := makePool(initialChecks, func(c paramCheck, output chan paramCheck) {
+		reflected, err := checkReflected(c.url)
+		if err != nil {
+			//fmt.Fprintf(os.Stderr, "error from checkReflected: %s\n", err)
+			return
+		}
 
-				reflected, err := checkReflected(inputURL)
-				if err != nil {
-					//fmt.Fprintf(os.Stderr, "error from checkReflected: %s\n", err)
-					continue
-				}
+		if len(reflected) == 0 {
+			// TODO: wrap in verbose mode
+			//fmt.Printf("no params were reflected in %s\n", c.url)
+			return
+		}
 
-				if len(reflected) == 0 {
-					// TODO: wrap in verbose mode
-					//fmt.Printf("no params were reflected in %s\n", inputURL)
-					continue
-				}
+		for _, param := range reflected {
+			output <- paramCheck{c.url, param}
+		}
+	})
 
-				for _, param := range reflected {
-					appendChecks <- appendCheck{inputURL, param}
-				}
+	charChecks := makePool(appendChecks, func(c paramCheck, output chan paramCheck) {
+		wasReflected, err := checkAppend(c.url, c.param, "iy3j4h234hjb23234")
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "error from checkAppend for url %s with param %s: %s", c.url, c.param, err)
+			return
+		}
 
+		if wasReflected {
+			output <- paramCheck{c.url, c.param}
+		}
+	})
+
+	done := makePool(charChecks, func(c paramCheck, output chan paramCheck) {
+		for _, char := range []string{"\"", "'", "<", ">"} {
+			wasReflected, err := checkAppend(c.url, c.param, "aprefix"+char+"asuffix")
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "error from checkAppend for url %s with param %s with %s: %s", c.url, c.param, char, err)
+				continue
 			}
-			wgInitial.Done()
-		}()
-	}
 
-	// append check worker pool
-	var wgAppend sync.WaitGroup
-	for i := 0; i < 40; i++ {
-		wgAppend.Add(1)
-
-		go func() {
-			for c := range appendChecks {
-				wasReflected, err := checkAppend(c.url, c.param, "iy3j4h234hjb23234")
-				if err != nil {
-					fmt.Fprintf(os.Stderr, "error from checkAppend for url %s with param %s: %s", c.url, c.param, err)
-					continue
-				}
-
-				if wasReflected {
-					charChecks <- appendCheck{c.url, c.param}
-				}
+			if wasReflected {
+				fmt.Printf("param %s is reflected and allows %s on %s\n", c.param, char, c.url)
 			}
-			wgAppend.Done()
-		}()
-
-	}
-
-	// char check worker pool
-	var wgChar sync.WaitGroup
-	for i := 0; i < 40; i++ {
-		wgChar.Add(1)
-
-		go func() {
-			for c := range charChecks {
-				for _, char := range []string{"\"", "'", "<", ">"} {
-					wasReflected, err := checkAppend(c.url, c.param, "aprefix"+char+"asuffix")
-					if err != nil {
-						fmt.Fprintf(os.Stderr, "error from checkAppend for url %s with param %s with %s: %s", c.url, c.param, char, err)
-						continue
-					}
-
-					if wasReflected {
-						fmt.Printf("got reflection of appended param %s with %s in value on %s\n", c.param, char, c.url)
-					}
-				}
-			}
-			wgChar.Done()
-		}()
-
-	}
+		}
+	})
 
 	for sc.Scan() {
-		initialChecks <- sc.Text()
+		initialChecks <- paramCheck{url: sc.Text()}
 	}
 
-	// this is silly. Need to refactor into something a bit less repetitive
 	close(initialChecks)
-	wgInitial.Wait()
-	close(appendChecks)
-	wgAppend.Wait()
-	close(charChecks)
-	wgChar.Wait()
-
+	<-done
 }
 
 func checkReflected(targetURL string) ([]string, error) {
@@ -218,4 +180,28 @@ func checkAppend(targetURL, param, suffix string) (bool, error) {
 	}
 
 	return false, nil
+}
+
+type workerFunc func(paramCheck, chan paramCheck)
+
+func makePool(input chan paramCheck, fn workerFunc) chan paramCheck {
+	var wg sync.WaitGroup
+
+	output := make(chan paramCheck)
+	for i := 0; i < 40; i++ {
+		wg.Add(1)
+		go func() {
+			for c := range input {
+				fn(c, output)
+			}
+			wg.Done()
+		}()
+	}
+
+	go func() {
+		wg.Wait()
+		close(output)
+	}()
+
+	return output
 }
