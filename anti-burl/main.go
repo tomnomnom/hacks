@@ -76,7 +76,7 @@ func main() {
 			if err != nil {
 				return
 			}
-			if resp.StatusCode <= 403 {
+			if (resp.StatusCode <= 403 || resp.StatusCode == 503) {
 				fmt.Printf("%-3d %-9d %-5d %s\n", resp.StatusCode, resp.ContentLength, ws, u.String())
 			}
 		}(raw)
