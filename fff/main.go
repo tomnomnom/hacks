@@ -10,8 +10,10 @@ import (
 	"io/ioutil"
 	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"path"
+	"regexp"
 	"strconv"
 	"strings"
 	"sync"
@@ -24,9 +26,11 @@ func init() {
 			"Request URLs provided on stdin fairly frickin' fast",
 			"",
 			"Options:",
+			"  -b, --body <data>         Request body",
 			"  -d, --delay <delay>       Delay between issuing requests (ms)",
 			"  -H, --header <header>     Add a header to the request (can be specified multiple times)",
 			"  -k, --keep-alive          Use HTTP Keep-Alive",
+			"  -m, --method              HTTP method to use (default: GET, or POST if body is specified)",
 			"  -o, --output <dir>        Directory to save responses in (will be created)",
 			"  -s, --save-status <code>  Save responses with given status code (can be specified multiple times)",
 			"  -S, --save                Save all responses",
@@ -38,6 +42,10 @@ func init() {
 }
 
 func main() {
+
+	var body string
+	flag.StringVar(&body, "body", "", "")
+	flag.StringVar(&body, "b", "", "")
 
 	var keepAlives bool
 	flag.BoolVar(&keepAlives, "keep-alive", false, "")
@@ -51,6 +59,10 @@ func main() {
 	var delayMs int
 	flag.IntVar(&delayMs, "delay", 100, "")
 	flag.IntVar(&delayMs, "d", 100, "")
+
+	var method string
+	flag.StringVar(&method, "method", "GET", "")
+	flag.StringVar(&method, "m", "GET", "")
 
 	var outputDir string
 	flag.StringVar(&outputDir, "output", "out", "")
@@ -84,7 +96,16 @@ func main() {
 			defer wg.Done()
 
 			// create the request
-			req, err := http.NewRequest("GET", rawURL, nil)
+			var b io.Reader
+			if body != "" {
+				b = strings.NewReader(body)
+
+				// Can't send a body with a GET request
+				if method == "GET" {
+					method = "POST"
+				}
+			}
+			req, err := http.NewRequest(method, rawURL, b)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "failed to create request: %s\n", err)
 				return
@@ -116,9 +137,10 @@ func main() {
 				return
 			}
 
-			// output files are prefix/domain/hash.(body|headers)
-			hash := sha1.Sum([]byte(rawURL))
-			p := path.Join(prefix, req.URL.Hostname(), fmt.Sprintf("%x.body", hash))
+			// output files are stored in prefix/domain/normalisedpath/hash.(body|headers)
+			normalisedPath := normalisePath(req.URL)
+			hash := sha1.Sum([]byte(method + rawURL + body + headers.String()))
+			p := path.Join(prefix, req.URL.Hostname(), normalisedPath, fmt.Sprintf("%x.body", hash))
 			err = os.MkdirAll(path.Dir(p), 0750)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "failed to create dir: %s\n", err)
@@ -140,7 +162,7 @@ func main() {
 			}
 
 			// create the headers file
-			headersPath := path.Join(prefix, req.URL.Hostname(), fmt.Sprintf("%x.headers", hash))
+			headersPath := path.Join(prefix, req.URL.Hostname(), normalisedPath, fmt.Sprintf("%x.headers", hash))
 			headersFile, err := os.Create(headersPath)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "failed to create file: %s\n", err)
@@ -149,14 +171,24 @@ func main() {
 			defer headersFile.Close()
 
 			var buf strings.Builder
-			buf.WriteString(fmt.Sprintf("%s\n\n", rawURL))
+
+			// put the request URL and method at the top
+			buf.WriteString(fmt.Sprintf("%s %s\n\n", method, rawURL))
 
 			// add the request headers
 			for _, h := range headers {
 				buf.WriteString(fmt.Sprintf("> %s\n", h))
 			}
-
 			buf.WriteRune('\n')
+
+			// add the request body
+			if body != "" {
+				buf.WriteString(body)
+				buf.WriteString("\n\n")
+			}
+
+			// add the proto and status
+			buf.WriteString(fmt.Sprintf("< %s %s\n", resp.Proto, resp.Status))
 
 			// add the response headers
 			for k, vs := range resp.Header {
@@ -165,6 +197,7 @@ func main() {
 				}
 			}
 
+			// add the response body
 			_, err = io.Copy(headersFile, strings.NewReader(buf.String()))
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "failed to write file contents: %s\n", err)
@@ -213,7 +246,7 @@ func (h *headerArgs) Set(val string) error {
 }
 
 func (h headerArgs) String() string {
-	return "string"
+	return strings.Join(h, ", ")
 }
 
 type saveStatusArgs []int
@@ -235,4 +268,9 @@ func (s saveStatusArgs) Includes(search int) bool {
 		}
 	}
 	return false
+}
+
+func normalisePath(u *url.URL) string {
+	re := regexp.MustCompile(`[^a-zA-Z0-9/._-]+`)
+	return re.ReplaceAllString(u.Path, "-")
 }
