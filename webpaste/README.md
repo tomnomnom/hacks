@@ -1,6 +1,6 @@
 Installing Webpaste:
 
-1. Clone tomonomnom hacks repo
+1. Clone hacks repo: https://github.com/tomnomnom/hacks
 2. Go to webpaste directory, run go build, and you will get "webpaste" binary file.
 3. Before starting webpaste, sen environment variable: export WEBPASTE_TOKEN=iloveweb
 4. By default webpaste runs on port 8080,
