@@ -2,9 +2,10 @@ Installing Webpaste:
 
 1. Clone hacks repo: https://github.com/tomnomnom/hacks
 2. Go to webpaste directory, run go build, and you will get "webpaste" binary file.
-3. Before starting webpaste, sen environment variable: export WEBPASTE_TOKEN=iloveweb
+3. Before starting webpaste, set environment variable: export WEBPASTE_TOKEN=iloveweb
 4. By default webpaste runs on port 8080,
 
+```
 $ ./webpaste -h
 Usage of ./webpaste:
   -a string
@@ -12,7 +13,7 @@ Usage of ./webpaste:
   -p string
         port to listen on (default "8080")
   -u    only print unique lines
-
+```
 
 Installing Extension:
 
@@ -37,7 +38,7 @@ http://localhost:8080 or http://ip:port
 Same token as set above example: iloveweb
 
 For Snippets, cloned directory has Google and JS extraction snippets.
-
+```
 cat hacks/webpaste/extension/snippets.js
 [
     {
@@ -52,7 +53,7 @@ cat hacks/webpaste/extension/snippets.js
         "onsuccess": "document.location=document.querySelectorAll('a.next_page')[0].href;"
     },
 ]
-
+```
 Copy only the values inside " " in expension option, Save.
 
 7. open google, search something: example: site:yahoo.com url:?
