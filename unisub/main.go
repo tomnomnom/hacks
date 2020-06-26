@@ -8,8 +8,12 @@ import (
 )
 
 func main() {
+
 	var silent bool
 	flag.BoolVar(&silent, "silent", false, "enable silnet mode")
+	var urlEncodeOnly bool
+	flag.BoolVar(&urlEncodeOnly, "encode", false, "display only url econded string")
+
 	flag.Parse()
 	
 	if flag.NArg() < 1 {
@@ -27,6 +31,8 @@ func main() {
 	for _, s := range subs {
 		if silent {
 			fmt.Printf("%c\n", s)
+		} else if urlEncodeOnly {
+			fmt.Printf("%s\n", url.QueryEscape(string(s)))
 		} else {
 			fmt.Printf("fallback: %c %U %s\n", s, s, url.QueryEscape(string(s)))
 		}		
@@ -41,6 +47,8 @@ func main() {
 		if strings.ToLower(string(s)) == char {
 			if silent {
 				fmt.Printf("%c\n", s)
+			} else if urlEncodeOnly {
+				fmt.Printf("%s\n", url.QueryEscape(string(s)))
 			} else {
 				fmt.Printf("toLower: %c %U %s\n", s, s, url.QueryEscape(string(s)))
 			}
@@ -49,6 +57,8 @@ func main() {
 		if strings.ToUpper(string(s)) == char {
 			if silent {
 				fmt.Printf("%c\n", s)
+			} else if urlEncodeOnly {
+				fmt.Printf("%s\n", url.QueryEscape(string(s)))
 			} else {
 				fmt.Printf("toUpper: %c %U %s\n", s, s, url.QueryEscape(string(s)))
 			}
