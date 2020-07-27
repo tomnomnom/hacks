@@ -44,7 +44,8 @@ func main() {
 	}
 
 	sc := bufio.NewScanner(input)
-
+	buf := make([]byte, 0, 64*1024)
+	sc.Buffer(buf, 1024*1024)
 	client = &http.Client{
 		Transport: &http.Transport{
 			MaxIdleConns:        concurrency,
