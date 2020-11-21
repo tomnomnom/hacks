@@ -13,7 +13,9 @@ func main() {
 
 	// configure the concurrency flag
 	concurrency := 20
+	var invert bool
 	flag.IntVar(&concurrency, "c", 20, "Set the concurrency level")
+	flag.BoolVar(&invert, "i", false, "Invert results")
 
 	// parse the flags
 	flag.Parse()
@@ -38,7 +40,7 @@ func main() {
 		go func() {
 			for domain := range jobs {
 				_, err := net.ResolveIPAddr("ip4", domain)
-				if err != nil {
+				if err != nil != invert {
 					continue
 				}
 				fmt.Println(domain)
