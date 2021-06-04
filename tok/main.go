@@ -11,9 +11,10 @@ import (
 )
 
 func main() {
-	var length int
-	flag.IntVar(&length, "length", 1, "min length of string to be output")
-
+	var minlength int
+	flag.IntVar(&minlength, "min", 1, "min length of string to be output")
+	var maxlength int
+	flag.IntVar(&maxlength, "max", 25, "max length of string to be output")
 	var alphaNumOnly bool
 	flag.BoolVar(&alphaNumOnly, "alpha-num-only", false, "return only strings containing at least one letter and one number")
 
@@ -60,7 +61,11 @@ func main() {
 
 			str := out.String()
 
-			if out.Len() < length {
+			if out.Len() < minlength {
+				reset()
+				continue
+			}
+			if out.Len() > maxlength {
 				reset()
 				continue
 			}

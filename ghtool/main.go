@@ -115,6 +115,9 @@ func getRepos(client *github.Client, user string) ([]string, error) {
 		}
 
 		for _, repo := range repos {
+			if *repo.Fork {
+				continue
+			}
 			allRepos = append(allRepos, *repo.CloneURL)
 		}
 
