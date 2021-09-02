@@ -5,7 +5,7 @@ Take URLs or filenames for HTML documents on stdin and extract tag contents, att
 ## Install
 
 ```
-▶ go get -u github.com/tomnomnom/hacks/html-tool
+▶ go install github.com/tomnomnom/hacks/html-tool@latest
 ```
 
 ## Usage
