@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"flag"
 	"errors"
 	"fmt"
 	"io"
@@ -15,6 +16,20 @@ import (
 type scopeChecker struct {
 	patterns     []*regexp.Regexp
 	antipatterns []*regexp.Regexp
+}
+
+func init() {
+	flag.Usage = func() {
+		h := []string{
+			"Filters in scope and out of scope urls from stdin.",
+			"",
+			"Options:",
+			"  -v, --inverse         Prints out of scope items",
+			"",
+		}
+
+		fmt.Fprintf(os.Stderr, strings.Join(h, "\n"))
+	}
 }
 
 func (s *scopeChecker) inScope(domain string) bool {
@@ -79,6 +94,11 @@ func newScopeChecker(r io.Reader) (*scopeChecker, error) {
 }
 
 func main() {
+	var inverse bool
+	flag.BoolVar(&inverse, "inverse", false, "")
+	flag.BoolVar(&inverse, "v", false, "")
+
+	flag.Parse()
 
 	sf, err := openScopefile()
 	if err != nil {
@@ -97,10 +117,15 @@ func main() {
 	for sc.Scan() {
 		domain := strings.TrimSpace(sc.Text())
 
-		if checker.inScope(domain) {
+		inScope := checker.inScope(domain)
+		if !inverse && inScope {
+			fmt.Println(domain)
+			continue
+		}
+		
+		if inverse && !inScope {
 			fmt.Println(domain)
 		}
-
 	}
 }
 
