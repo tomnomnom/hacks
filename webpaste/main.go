@@ -63,7 +63,7 @@ func main() {
 		return
 	}
 
-	bus = make(chan []string)
+	bus = make(chan []string, 10000)
 
 	go func() {
 		seen := make(map[string]bool)
