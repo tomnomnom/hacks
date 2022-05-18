@@ -1,0 +1,4 @@
+github.com/aofei/mimesniffer v1.2.0 h1:xrhv1cQ2EpVPbNfdmzy/gIuegaEIqfQUhK7aK7VwJWg=
+github.com/aofei/mimesniffer v1.2.0/go.mod h1:RdFvw/YnqGk4qKjvwV5N6SXc/Hr/VaX+eP1iabbqBKk=
+github.com/nsf/jsondiff v0.0.0-20210926074059-1e845ec5d249 h1:NHrXEjTNQY7P0Zfx1aMrNhpgxHmow66XQtm0aQLY0AE=
+github.com/nsf/jsondiff v0.0.0-20210926074059-1e845ec5d249/go.mod h1:mpRZBD8SJ55OIICQ3iWH0Yz3cjzA61JdqMLoWXeB2+8=
