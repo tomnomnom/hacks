@@ -43,7 +43,7 @@ cat hacks/webpaste/extension/snippets.js
 [
     {
         "name": "Google URLs",
-        "code": "[...document.querySelectorAll('div.r>a:first-child')].map(n=>n.href)",
+        "code": "[...document.querySelectorAll('div.yuRUbf>a:first-child')].map(n=>n.href)",
         "onsuccess": "document.location=document.querySelectorAll('a#pnnext')[0].href;"
     },
 
