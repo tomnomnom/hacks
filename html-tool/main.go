@@ -19,7 +19,7 @@ func extractSelector(r io.Reader, selector string) ([]string, error) {
 
 	out := []string{}
 
-	sel, err := css.Compile(selector)
+	sel, err := css.Parse(selector)
 	if err != nil {
 		return out, err
 	}
