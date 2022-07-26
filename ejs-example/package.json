@@ -5,7 +5,7 @@
   "main": "main.js",
   "dependencies": {
     "bcrypt": "^3.0.6",
-    "ejs": "^2.7.1",
+    "ejs": "^3.1.7",
     "express": "^4.17.1",
     "express-session": "^1.16.2",
     "mongodb": "^3.3.2"
