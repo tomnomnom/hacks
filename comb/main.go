@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"strings"
 	"flag"
 	"fmt"
 	"os"
@@ -11,6 +12,10 @@ func main() {
 	var flip bool
 	flag.BoolVar(&flip, "f", false, "")
 	flag.BoolVar(&flip, "flip", false, "")
+
+	var trim bool
+	flag.BoolVar(&trim, "t", false, "")
+	flag.BoolVar(&trim, "trim", false, "")
 
 	var separator string
 	flag.StringVar(&separator, "s", "", "")
@@ -52,10 +57,18 @@ func main() {
 
 		b := bufio.NewScanner(fileB)
 		for b.Scan() {
+			aText := a.Text()
+			bText := b.Text()
+
+			if trim {
+				aText = strings.TrimSpace(aText)
+				bText = strings.TrimSpace(bText)
+			}
+
 			if flip {
-				fmt.Printf("%s%s%s\n", b.Text(), separator, a.Text())
+				fmt.Printf("%s%s%s\n", bText, separator, aText)
 			} else {
-				fmt.Printf("%s%s%s\n", a.Text(), separator, b.Text())
+				fmt.Printf("%s%s%s\n", aText, separator, bText)
 			}
 		}
 	}
@@ -70,5 +83,6 @@ func init() {
 		fmt.Fprintf(os.Stderr, "Options:\n")
 		fmt.Fprintf(os.Stderr, "  -f, --flip             Flip mode (order by suffix)\n")
 		fmt.Fprintf(os.Stderr, "  -s, --separator <str>  String to place between prefix and suffix\n")
+		fmt.Fprintf(os.Stderr, "  -t, --trim             Trim strings\n")
 	}
 }
