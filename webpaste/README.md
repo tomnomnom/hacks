@@ -49,7 +49,7 @@ cat hacks/webpaste/extension/snippets.js
 
     {
         "name": "GitHub Code Results",
-        "code": "[...document.querySelectorAll('#code_search_results a.text-bold')].map(n=>n.href)",
+        "code": "[...document.querySelectorAll('#code_search_results .f4.text-normal a')].map(n=>n.href)",
         "onsuccess": "document.location=document.querySelectorAll('a.next_page')[0].href;"
     },
 ]
