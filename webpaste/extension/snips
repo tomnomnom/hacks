@@ -1,5 +1,5 @@
 Google URLs
-[...document.querySelectorAll('div.r>a:first-child')].map(n=>n.href)
+[...document.querySelectorAll('div.yuRUbf>a:first-child')].map(n=>n.href)
 document.location=document.querySelectorAll('a#pnnext')[0].href;
 
 GitHub Results
