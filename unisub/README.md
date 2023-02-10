@@ -3,7 +3,7 @@ Find Unicode characters that might be converted to a given character under some 
 
 ## Install
 ```
-▶ go get -u github.com/tomnomnom/hacks/unisub
+▶ go install github.com/tomnomnom/hacks/unisub@latest
 ```
 
 ## Usage
