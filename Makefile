@@ -8,7 +8,7 @@ UTIL_DIRS := $(shell find . -maxdepth 1 -type d -not -path './.git' -not -path '
 BIN_PATHS := $(shell find . -type f -not -path './.git' -executable)
 BIN_DEST := /usr/local/bin/
 
-all: clean init tidy build copy
+all: init tidy build copy
 
 clean:
 	@rm go.mod
