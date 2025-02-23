@@ -9,7 +9,7 @@ it though.
 ## Install
 
 ```
-go get -u github.com/tomnomnom/hacks/ettu
+go install -v github.com/tomnomnom/hacks/ettu@latest
 ```
 
 ## Usage
