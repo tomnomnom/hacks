@@ -72,5 +72,5 @@ func main() {
 		root.addList(parts)
 	}
 
-	fmt.Println(root.tree(""))
+	fmt.Printf("%s", root.tree(""))
 }
